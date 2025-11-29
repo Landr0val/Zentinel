@@ -27,6 +27,9 @@ func NewAccountUseCase(accountRepo repository.AccountRepository, clientRepo repo
 	}
 }
 
+// CreateAccount creates a new account for a client.
+// <PARAMETERS> ctx: context.Context - The context for the operation.
+// <RETURNS> (*dto.AccountResponse, error) - The created account response or an error if the operation fails.
 func (s *AccountUseCase) CreateAccount(ctx context.Context, req dto.CreateAccountRequest) (*dto.AccountResponse, error) {
 	if _, err := s.clientRepo.FindByID(ctx, req.ClientID); err != nil {
 		return nil, err

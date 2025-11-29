@@ -1,0 +1,153 @@
+package ai
+
+import (
+	"context"
+	"fmt"
+	"math"
+	"strings"
+	"time"
+	"zentinel/internal/domain/entity"
+	"zentinel/internal/domain/enums"
+	"zentinel/internal/domain/service"
+)
+
+type MockAnalyzer struct{}
+
+func NewMockAnalyzer() service.AIService {
+	return &MockAnalyzer{}
+}
+
+func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *entity.Transaction, client *entity.Client, account *entity.Account, history []*entity.Transaction) (*service.FraudAnalysisResult, error) {
+	score := 0
+	var factors []string
+
+	// 1. Monto inusual: Monto > 3x promedio histórico
+	avgAmount := calculateAverageAmount(history)
+	if avgAmount > 0 && transaction.Amount.Amount() > 3*avgAmount {
+		score += 35
+		factors = append(factors, "Monto inusual (supera 3x el promedio)")
+	}
+
+	// 2. Ubicación inusual: País diferente al más frecuente
+	frequentCountry := getMostFrequentCountry(history)
+	if frequentCountry != "" && transaction.Country != frequentCountry {
+		score += 25
+		factors = append(factors, fmt.Sprintf("Ubicación inusual (diferente a %s)", frequentCountry))
+	}
+
+	// 3. Alta frecuencia: >10 transacciones en 24h
+	recentCount := countRecentTransactions(history, transaction.CreatedAt, 24*time.Hour)
+	if recentCount > 10 {
+		score += 20
+		factors = append(factors, "Alta frecuencia de transacciones")
+	}
+
+	// 4. Canal inusual: Canal poco usado por el cliente
+	if !isChannelCommon(history, transaction.Channel) {
+		score += 15
+		factors = append(factors, "Canal inusual")
+	}
+
+	// 5. Horario inusual: Transacción en horario atípico (ej. 02:00 - 05:00)
+	hour := transaction.CreatedAt.Hour()
+	if hour >= 2 && hour <= 5 {
+		score += 10
+		factors = append(factors, "Horario inusual (madrugada)")
+	}
+
+	// 6. Monto redondo sospechoso: Montos exactos grandes
+	if transaction.Amount.Amount() >= 1000 && math.Mod(transaction.Amount.Amount(), 100) == 0 {
+		score += 10
+		factors = append(factors, "Monto redondo sospechoso")
+	}
+
+	// Cap score at 100
+	if score > 100 {
+		score = 100
+	}
+
+	// Determine Risk Level and Action
+	var riskLevel enums.AlertSeverity
+	shouldBlock := false
+
+	switch {
+	case score >= 80:
+		riskLevel = enums.AlertSeverityCritical
+		shouldBlock = true
+	case score >= 60:
+		riskLevel = enums.AlertSeverityHigh
+	case score >= 40:
+		riskLevel = enums.AlertSeverityMedium
+	default:
+		riskLevel = enums.AlertSeverityLow
+	}
+
+	explanation := "Análisis completado. "
+	if len(factors) > 0 {
+		explanation += "Factores de riesgo detectados: " + strings.Join(factors, ", ") + "."
+	} else {
+		explanation += "No se detectaron factores de riesgo significativos."
+	}
+
+	return &service.FraudAnalysisResult{
+		RiskScore:   score,
+		RiskLevel:   riskLevel,
+		Factors:     factors,
+		Explanation: explanation,
+		ShouldBlock: shouldBlock,
+	}, nil
+}
+
+func calculateAverageAmount(history []*entity.Transaction) float64 {
+	if len(history) == 0 {
+		return 0
+	}
+	var sum float64
+	for _, tx := range history {
+		sum += tx.Amount.Amount()
+	}
+	return sum / float64(len(history))
+}
+
+func getMostFrequentCountry(history []*entity.Transaction) string {
+	if len(history) == 0 {
+		return ""
+	}
+	counts := make(map[string]int)
+	for _, tx := range history {
+		counts[tx.Country]++
+	}
+	var maxCountry string
+	var maxCount int
+	for country, count := range counts {
+		if count > maxCount {
+			maxCount = count
+			maxCountry = country
+		}
+	}
+	return maxCountry
+}
+
+func countRecentTransactions(history []*entity.Transaction, current time.Time, window time.Duration) int {
+	count := 0
+	limit := current.Add(-window)
+	for _, tx := range history {
+		if tx.CreatedAt.After(limit) && tx.CreatedAt.Before(current) {
+			count++
+		}
+	}
+	return count
+}
+
+func isChannelCommon(history []*entity.Transaction, channel enums.Channel) bool {
+	if len(history) == 0 {
+		return true
+	}
+	count := 0
+	for _, tx := range history {
+		if tx.Channel == channel {
+			count++
+		}
+	}
+	return float64(count)/float64(len(history)) > 0.1
+}
