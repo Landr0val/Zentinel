@@ -6,6 +6,8 @@ import (
 	"zentinel/internal/application/dto"
 	"zentinel/internal/application/port"
 	"zentinel/internal/domain"
+	"zentinel/internal/domain/enums"
+	"zentinel/internal/domain/repository"
 	"zentinel/internal/infrastructure/driving/http/dto/response"
 	"zentinel/internal/infrastructure/driving/http/errorhandler"
 
@@ -62,26 +64,44 @@ func (h *AlertHandler) Get(c *gin.Context) {
 }
 
 func (h *AlertHandler) List(c *gin.Context) {
-	pageStr := c.DefaultQuery("page", "1")
-	pageSizeStr := c.DefaultQuery("page_size", "10")
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 1 {
-		page = 1
+	filter := repository.AlertFilter{
+		Page:     1,
+		PageSize: 10,
 	}
 
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil || pageSize < 1 {
-		pageSize = 10
+	if pageStr := c.Query("page"); pageStr != "" {
+		if page, err := strconv.Atoi(pageStr); err == nil && page > 0 {
+			filter.Page = page
+		}
 	}
 
-	alerts, total, err := h.alertUseCase.ListAlerts(c.Request.Context(), page, pageSize)
+	if pageSizeStr := c.Query("page_size"); pageSizeStr != "" {
+		if pageSize, err := strconv.Atoi(pageSizeStr); err == nil && pageSize > 0 {
+			filter.PageSize = pageSize
+		}
+	}
+
+	if search := c.Query("search"); search != "" {
+		filter.Search = search
+	}
+
+	if statusStr := c.Query("status"); statusStr != "" {
+		status := enums.AlertStatus(statusStr)
+		filter.Status = &status
+	}
+
+	if severityStr := c.Query("severity"); severityStr != "" {
+		severity := enums.AlertSeverity(severityStr)
+		filter.Severity = &severity
+	}
+
+	alerts, total, err := h.alertUseCase.ListAlerts(c.Request.Context(), filter)
 	if err != nil {
 		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, response.NewPaginatedResponse(alerts, page, pageSize, total))
+	c.JSON(http.StatusOK, response.NewPaginatedResponse(alerts, filter.Page, filter.PageSize, total))
 }
 
 func (h *AlertHandler) UpdateStatus(c *gin.Context) {

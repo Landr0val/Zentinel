@@ -76,17 +76,38 @@ func (r *AlertRepository) FindByTransactionID(ctx context.Context, transactionID
 	return alerts, nil
 }
 
-func (r *AlertRepository) FindAll(ctx context.Context, page int, pageSize int) ([]*entity.Alert, int64, error) {
+func (r *AlertRepository) FindAll(ctx context.Context, filter repository.AlertFilter) ([]*entity.Alert, int64, error) {
 	var alertModels []model.AlertModel
 	var total int64
 
-	offset := (page - 1) * pageSize
+	query := r.db.WithContext(ctx).Model(&model.AlertModel{})
 
-	if err := r.db.WithContext(ctx).Model(&model.AlertModel{}).Count(&total).Error; err != nil {
+	if filter.Status != nil {
+		query = query.Joins("JOIN catalogues AS status_cat ON alerts.status_id = status_cat.id").
+			Joins("JOIN master_data_types AS status_mdt ON status_cat.type_id = status_mdt.id").
+			Where("status_cat.code = ? AND status_mdt.code = 'ALERT_STATUS'", *filter.Status)
+	}
+
+	if filter.Severity != nil {
+		query = query.Joins("JOIN catalogues AS sev_cat ON alerts.severity_id = sev_cat.id").
+			Joins("JOIN master_data_types AS sev_mdt ON sev_cat.type_id = sev_mdt.id").
+			Where("sev_cat.code = ? AND sev_mdt.code = 'ALERT_SEVERITY'", *filter.Severity)
+	}
+
+	if filter.Search != "" {
+		if id, err := uuid.Parse(filter.Search); err == nil {
+			query = query.Where("alerts.id = ? OR alerts.transaction_id = ?", id, id)
+		} else {
+			query = query.Where("alerts.description ILIKE ?", "%"+filter.Search+"%")
+		}
+	}
+
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	result := r.db.WithContext(ctx).Offset(offset).Limit(pageSize).Order("created_at desc").Find(&alertModels)
+	offset := (filter.Page - 1) * filter.PageSize
+	result := query.Select("alerts.*").Offset(offset).Limit(filter.PageSize).Order("alerts.created_at desc").Find(&alertModels)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}

@@ -15,5 +15,5 @@ type FraudAnalysisResult struct {
 }
 
 type AIService interface {
-	AnalyzeTransaction(ctx context.Context, transaction *entity.Transaction, client *entity.Client, account *entity.Account, history []*entity.Transaction) (*FraudAnalysisResult, error)
+	AnalyzeTransaction(ctx context.Context, transaction *entity.Transaction, client *entity.Client, account *entity.Account, history []*entity.Transaction, currencyCode string) (*FraudAnalysisResult, error)
 }

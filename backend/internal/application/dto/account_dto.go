@@ -21,6 +21,7 @@ type UpdateAccountRequest struct {
 type AccountResponse struct {
 	ID            uuid.UUID           `json:"id"`
 	ClientID      uuid.UUID           `json:"client_id"`
+	ClientName    string              `json:"client_name,omitempty"`
 	AccountNumber string              `json:"account_number"`
 	AccountType   enums.AccountType   `json:"account_type"`
 	Currency      string              `json:"currency"`

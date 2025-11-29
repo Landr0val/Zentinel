@@ -41,13 +41,16 @@ func (h *AccountHandler) Create(c *gin.Context) {
 
 func (h *AccountHandler) Get(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("INVALID_ID", "Invalid account ID", err.Error()))
-		return
+
+	var account *dto.AccountResponse
+	var err error
+
+	if id, parseErr := uuid.Parse(idStr); parseErr == nil {
+		account, err = h.accountUseCase.GetAccount(c.Request.Context(), id)
+	} else {
+		account, err = h.accountUseCase.GetAccountByNumber(c.Request.Context(), idStr)
 	}
 
-	account, err := h.accountUseCase.GetAccount(c.Request.Context(), id)
 	if err != nil {
 		errorhandler.HandleDomainError(c, err)
 		return

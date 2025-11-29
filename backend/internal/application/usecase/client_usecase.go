@@ -55,6 +55,40 @@ func (s *ClientUseCase) CreateClient(ctx context.Context, req dto.CreateClientRe
 		return nil, err
 	}
 
+	if req.InitialAccount != nil {
+		accountTypeCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "ACCOUNT_TYPE", string(req.InitialAccount.AccountType))
+		if err != nil {
+			return nil, err
+		}
+
+		currencyCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "CURRENCY", req.InitialAccount.Currency)
+		if err != nil {
+			return nil, err
+		}
+
+		statusCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "ACCOUNT_STATUS", string(enums.AccountStatusActive))
+		if err != nil {
+			return nil, err
+		}
+
+		account := &entity.Account{
+			ID:            uuid.New(),
+			ClientID:      client.ID,
+			ClientName:    client.FullName,
+			AccountNumber: req.InitialAccount.AccountNumber,
+			AccountTypeID: accountTypeCat.ID,
+			CurrencyID:    currencyCat.ID,
+			Balance:       0,
+			StatusID:      statusCat.ID,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
+		}
+
+		if err := s.accountRepo.Save(ctx, account); err != nil {
+			return nil, err
+		}
+	}
+
 	return s.mapToResponse(ctx, client)
 }
 

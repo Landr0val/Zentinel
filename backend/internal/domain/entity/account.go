@@ -9,6 +9,7 @@ import (
 type Account struct {
 	ID            uuid.UUID
 	ClientID      uuid.UUID
+	ClientName    string
 	AccountNumber string
 	AccountTypeID uuid.UUID
 	CurrencyID    uuid.UUID

@@ -2,26 +2,26 @@
 
 import {
   Activity,
-  AlertTriangle,
-  ArrowDownRight,
-  ArrowUpRight,
   DollarSign,
   Users,
   Loader2,
+  ShieldAlert,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api } from "../lib/api";
 import Link from "next/link";
+import { cn } from "../lib/utils";
 
 export default function Dashboard() {
   const {
@@ -36,16 +36,18 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg bg-red-50 p-4 text-red-800">
+      <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-destructive">
         <h3 className="text-lg font-medium">Error al cargar datos</h3>
-        <p>No se pudo conectar con el servidor. Por favor intente más tarde.</p>
+        <p className="text-sm opacity-80">
+          No se pudo conectar con el servidor.
+        </p>
       </div>
     );
   }
@@ -55,47 +57,61 @@ export default function Dashboard() {
   const statCards = [
     {
       name: "Volumen Total",
-      value: stats ? `$${stats.total_volume.toLocaleString()}` : "-",
-      change: stats
+      value:
+        stats?.total_volume !== undefined
+          ? `$${stats.total_volume.toLocaleString()}`
+          : "-",
+      change: stats?.volume_change_percentage
         ? `${stats.volume_change_percentage > 0 ? "+" : ""}${stats.volume_change_percentage}%`
         : "-",
-      trend: stats && stats.volume_change_percentage >= 0 ? "up" : "down",
+      trend:
+        stats?.volume_change_percentage !== undefined &&
+        stats.volume_change_percentage >= 0
+          ? "up"
+          : "down",
       icon: DollarSign,
-      color: "text-green-600",
-      bg: "bg-green-100",
     },
     {
       name: "Transacciones",
-      value: stats ? stats.transaction_count.toLocaleString() : "-",
-      change: stats
+      value:
+        stats?.total_transactions !== undefined
+          ? stats.total_transactions.toLocaleString()
+          : "-",
+      change: stats?.transaction_change_percentage
         ? `${stats.transaction_change_percentage > 0 ? "+" : ""}${stats.transaction_change_percentage}%`
         : "-",
-      trend: stats && stats.transaction_change_percentage >= 0 ? "up" : "down",
+      trend:
+        stats?.transaction_change_percentage !== undefined &&
+        stats.transaction_change_percentage >= 0
+          ? "up"
+          : "down",
       icon: Activity,
-      color: "text-blue-600",
-      bg: "bg-blue-100",
     },
     {
       name: "Alertas de Fraude",
-      value: stats ? stats.alert_count.toLocaleString() : "-",
-      change: stats
+      value:
+        stats?.flagged_count !== undefined
+          ? stats.flagged_count.toLocaleString()
+          : "-",
+      change: stats?.alert_change_percentage
         ? `${stats.alert_change_percentage > 0 ? "+" : ""}${stats.alert_change_percentage}%`
         : "-",
-      trend: stats && stats.alert_change_percentage <= 0 ? "up" : "down", // Logic handled in render
-      icon: AlertTriangle,
-      color: "text-red-600",
-      bg: "bg-red-100",
+      trend:
+        stats?.alert_change_percentage !== undefined &&
+        stats.alert_change_percentage <= 0
+          ? "up"
+          : "down",
+      icon: ShieldAlert,
     },
     {
-      name: "Clientes Activos",
-      value: stats ? stats.active_clients.toLocaleString() : "-",
-      change: stats
-        ? `${stats.client_change_percentage > 0 ? "+" : ""}${stats.client_change_percentage}%`
-        : "-",
-      trend: stats && stats.client_change_percentage >= 0 ? "up" : "down",
-      icon: Users,
-      color: "text-purple-600",
-      bg: "bg-purple-100",
+      name: "Volumen de Riesgo",
+      value:
+        stats?.flagged_volume !== undefined
+          ? `$${stats.flagged_volume.toLocaleString()}`
+          : "-",
+      change: "-",
+      trend: "down",
+      icon: ShieldAlert,
     },
   ];
 
@@ -108,114 +124,127 @@ export default function Dashboard() {
     })) || [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500">
-          Resumen de actividad y monitoreo en tiempo real.
-        </p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-light tracking-tight text-foreground">
+            Dashboard
+          </h1>
+          <p className="mt-2 text-muted-foreground">Monitoreo en tiempo real</p>
+        </div>
+        <div className="text-sm text-muted-foreground border border-border px-3 py-1 rounded-full hidden sm:block">
+          {new Date().toLocaleDateString("es-ES", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => {
-          const isAlerts = stat.name === "Alertas de Fraude";
-          // Logic for color:
-          // Normal: Up = Green, Down = Red
-          // Alerts: Up = Red, Down = Green
-          let trendColor = "text-slate-500";
-          const TrendIcon = stat.trend === "up" ? ArrowUpRight : ArrowDownRight;
-
-          if (isAlerts) {
-            // For alerts, trend "up" (more alerts) is bad (red), "down" is good (green)
-            // But the 'trend' property in stat object is calculated based on value change.
-            // If change > 0, trend is 'up'.
-            // If alerts increased (trend up), we want red.
-            trendColor =
-              stat.trend === "up" ? "text-red-500" : "text-green-500";
-          } else {
-            // For others, trend "up" is good (green)
-            trendColor =
-              stat.trend === "up" ? "text-green-500" : "text-red-500";
-          }
-
+          const TrendIcon = stat.trend === "up" ? TrendingUp : TrendingDown;
           return (
             <div
               key={stat.name}
-              className="rounded-xl bg-white p-6 shadow-sm border border-slate-100"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-zen transition-all hover:shadow-lg"
             >
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">
-                    {stat.name}
-                  </p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900">
-                    {stat.value}
-                  </p>
+                <div className="rounded-xl bg-secondary/50 p-2.5 text-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <stat.icon className="h-5 w-5" />
                 </div>
-                <div className={`rounded-full p-3 ${stat.bg}`}>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                <div
+                  className={cn(
+                    "flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full border",
+                    stat.trend === "up"
+                      ? "border-border bg-secondary/30 text-foreground"
+                      : "border-border bg-secondary/30 text-muted-foreground",
+                  )}
+                >
+                  <TrendIcon className="h-3 w-3" />
+                  <span>{stat.change}</span>
                 </div>
               </div>
-              <div className="mt-4 flex items-center text-sm">
-                <TrendIcon className={`mr-1 h-4 w-4 ${trendColor}`} />
-                <span className={trendColor}>{stat.change}</span>
-                <span className="ml-2 text-slate-400">vs mes anterior</span>
+              <div className="mt-4">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {stat.name}
+                </p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+                  {stat.value}
+                </p>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Chart */}
-        <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">
-            Actividad Semanal
-          </h3>
-          <div className="h-80 w-full">
+        <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-8 shadow-zen">
+          <div className="mb-6 flex items-center justify-between">
+            <h3 className="text-lg font-medium text-foreground">
+              Actividad Semanal
+            </h3>
+          </div>
+          <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData}
                 margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
+                  top: 10,
+                  right: 10,
+                  left: -20,
+                  bottom: 0,
                 }}
+                barGap={8}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="var(--border)"
+                  opacity={0.4}
+                />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#64748b" }}
+                  tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+                  dy={10}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#64748b" }}
+                  tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
                 />
                 <Tooltip
+                  cursor={{ fill: "var(--secondary)", opacity: 0.4 }}
                   contentStyle={{
-                    backgroundColor: "#fff",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    backgroundColor: "var(--popover)",
+                    borderColor: "var(--border)",
+                    borderRadius: "12px",
+                    boxShadow: "var(--shadow-zen)",
+                    color: "var(--popover-foreground)",
                   }}
+                  itemStyle={{ color: "var(--foreground)" }}
                 />
-                <Legend />
                 <Bar
                   dataKey="transacciones"
                   name="Transacciones"
-                  fill="#3b82f6"
-                  radius={[4, 4, 0, 0]}
+                  fill="var(--foreground)"
+                  radius={[6, 6, 6, 6]}
+                  barSize={32}
+                  animationDuration={1000}
                 />
                 <Bar
                   dataKey="fraudes"
                   name="Alertas"
-                  fill="#ef4444"
-                  radius={[4, 4, 0, 0]}
+                  fill="var(--muted-foreground)"
+                  radius={[6, 6, 6, 6]}
+                  barSize={32}
+                  animationDuration={1000}
+                  opacity={0.3}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -223,59 +252,74 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Alerts */}
-        <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">
+        <div className="rounded-3xl border border-border bg-card p-8 shadow-zen flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-medium text-foreground">
               Alertas Recientes
             </h3>
             <Link
               href="/alerts"
-              className="text-sm font-medium text-blue-600 hover:text-blue-500"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors border border-border px-3 py-1 rounded-full hover:bg-secondary"
             >
               Ver todas
             </Link>
           </div>
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto pr-2 space-y-4">
             {stats?.recent_alerts && stats.recent_alerts.length > 0 ? (
               stats.recent_alerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="flex items-start space-x-4 p-3 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="group flex flex-col gap-3 rounded-2xl border border-border bg-secondary/10 p-4 transition-all hover:bg-secondary/40 hover:border-secondary-foreground/10"
                 >
-                  <div
-                    className={`rounded-full p-2 ${
-                      alert.severity === "high"
-                        ? "bg-red-100 text-red-600"
-                        : alert.severity === "medium"
-                          ? "bg-yellow-100 text-yellow-600"
-                          : "bg-blue-100 text-blue-600"
-                    }`}
-                  >
-                    <AlertTriangle className="h-4 w-4" />
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          alert.severity === "high"
+                            ? "bg-foreground"
+                            : alert.severity === "medium"
+                              ? "bg-muted-foreground"
+                              : "bg-border",
+                        )}
+                      />
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        {alert.severity === "high"
+                          ? "Crítico"
+                          : alert.severity === "medium"
+                            ? "Medio"
+                            : "Bajo"}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(alert.created_at).toLocaleDateString()}
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">
+
+                  <div>
+                    <p className="text-sm font-medium text-foreground leading-snug">
                       {alert.description}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      Tx: {alert.transaction_id} •{" "}
-                      {new Date(alert.created_at).toLocaleDateString()}
+                    <p className="mt-1 text-xs text-muted-foreground font-mono">
+                      Ref: {alert.transaction_code}
                     </p>
                   </div>
-                  <div className="text-right">
+
+                  <div className="pt-2 mt-1 border-t border-border/50 flex justify-end">
                     <Link
                       href={`/alerts/${alert.id}`}
-                      className="text-xs font-medium text-blue-600 hover:underline"
+                      className="text-xs font-medium text-foreground hover:underline decoration-1 underline-offset-4"
                     >
-                      Ver
+                      Revisar detalles &rarr;
                     </Link>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500 text-center py-4">
-                No hay alertas recientes.
-              </p>
+              <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                <ShieldAlert className="h-8 w-8 mb-2 opacity-20" />
+                <p className="text-sm">Sin alertas recientes</p>
+              </div>
             )}
           </div>
         </div>

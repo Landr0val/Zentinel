@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"strings"
 	"time"
 	"zentinel/internal/application/dto"
 	"zentinel/internal/application/port"
@@ -69,8 +70,8 @@ func (s *AlertUseCase) GetAlert(ctx context.Context, id uuid.UUID) (*dto.AlertRe
 	return s.mapToResponse(ctx, alert)
 }
 
-func (s *AlertUseCase) ListAlerts(ctx context.Context, page, pageSize int) ([]*dto.AlertResponse, int64, error) {
-	alerts, total, err := s.alertRepo.FindAll(ctx, page, pageSize)
+func (s *AlertUseCase) ListAlerts(ctx context.Context, filter repository.AlertFilter) ([]*dto.AlertResponse, int64, error) {
+	alerts, total, err := s.alertRepo.FindAll(ctx, filter)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -141,17 +142,24 @@ func (s *AlertUseCase) mapToResponse(ctx context.Context, alert *entity.Alert) (
 		statusCode = enums.AlertStatus(statusCat.Code)
 	}
 
+	var transactionCode string
+	if alert.TransactionID != nil {
+		transactionCode = "#" + strings.ToUpper(alert.TransactionID.String()[len(alert.TransactionID.String())-6:])
+	}
+
 	return &dto.AlertResponse{
-		ID:            alert.ID,
-		TransactionID: alert.TransactionID,
-		ClientID:      alert.ClientID,
-		AlertType:     alertTypeCode,
-		Severity:      severityCode,
-		Description:   alert.Description,
-		AIExplanation: alert.AIExplanation,
-		Status:        statusCode,
-		ReviewedBy:    alert.ReviewedBy,
-		ReviewedAt:    alert.ReviewedAt,
-		CreatedAt:     alert.CreatedAt,
+		ID:              alert.ID,
+		Code:            "#" + strings.ToUpper(alert.ID.String()[len(alert.ID.String())-6:]),
+		TransactionID:   alert.TransactionID,
+		TransactionCode: transactionCode,
+		ClientID:        alert.ClientID,
+		AlertType:       alertTypeCode,
+		Severity:        severityCode,
+		Description:     alert.Description,
+		AIExplanation:   alert.AIExplanation,
+		Status:          statusCode,
+		ReviewedBy:      alert.ReviewedBy,
+		ReviewedAt:      alert.ReviewedAt,
+		CreatedAt:       alert.CreatedAt,
 	}, nil
 }

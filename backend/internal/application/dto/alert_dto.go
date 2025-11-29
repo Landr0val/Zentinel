@@ -22,15 +22,17 @@ type UpdateAlertStatusRequest struct {
 }
 
 type AlertResponse struct {
-	ID            uuid.UUID           `json:"id"`
-	TransactionID *uuid.UUID          `json:"transaction_id,omitempty"`
-	ClientID      uuid.UUID           `json:"client_id"`
-	AlertType     enums.AlertType     `json:"alert_type"`
-	Severity      enums.AlertSeverity `json:"severity"`
-	Description   string              `json:"description"`
-	AIExplanation string              `json:"ai_explanation,omitempty"`
-	Status        enums.AlertStatus   `json:"status"`
-	ReviewedBy    string              `json:"reviewed_by,omitempty"`
-	ReviewedAt    *time.Time          `json:"reviewed_at,omitempty"`
-	CreatedAt     time.Time           `json:"created_at"`
+	ID              uuid.UUID           `json:"id"`
+	Code            string              `json:"code"`
+	TransactionID   *uuid.UUID          `json:"transaction_id,omitempty"`
+	TransactionCode string              `json:"transaction_code,omitempty"`
+	ClientID        uuid.UUID           `json:"client_id"`
+	AlertType       enums.AlertType     `json:"alert_type"`
+	Severity        enums.AlertSeverity `json:"severity"`
+	Description     string              `json:"description"`
+	AIExplanation   string              `json:"ai_explanation,omitempty"`
+	Status          enums.AlertStatus   `json:"status"`
+	ReviewedBy      string              `json:"reviewed_by,omitempty"`
+	ReviewedAt      *time.Time          `json:"reviewed_at,omitempty"`
+	CreatedAt       time.Time           `json:"created_at"`
 }

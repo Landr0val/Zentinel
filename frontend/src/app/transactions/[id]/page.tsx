@@ -263,7 +263,7 @@ export default function TransactionDetailPage() {
                     Cuenta Origen
                   </span>
                   <Link
-                    href={`/accounts/${transactionData.accountId}`}
+                    href={`/accounts/${transactionData.accountNumber}`}
                     className="text-xs text-blue-600 hover:underline"
                   >
                     Ver cuenta

@@ -2,47 +2,51 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import PageHeader from "../../../components/PageHeader";
 import { api } from "../../../lib/api";
-import { CreateClientRequest } from "../../../types";
+import { CreateTransactionRequest, Account } from "../../../types";
 
-export default function NewClientPage() {
+export default function NewTransactionPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accounts, setAccounts] = useState<Account[]>([]);
 
-  const [formData, setFormData] = useState<CreateClientRequest>({
-    document_type: "DNI",
-    document_number: "",
-    full_name: "",
-    email: "",
-    phone: "",
-    initial_account: {
-      account_number: "",
-      account_type: "savings",
-      currency: "USD",
-    },
+  const [formData, setFormData] = useState<CreateTransactionRequest>({
+    account_id: "",
+    amount: 0,
+    currency: "USD",
+    operation_type: "purchase",
+    channel: "web",
+    merchant: "",
+    country: "",
+    city: "",
   });
+
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const response = await api.accounts.list({ page_size: 100 });
+        setAccounts(response.data);
+        if (response.data.length > 0) {
+          setFormData((prev) => ({ ...prev, account_id: response.data[0].id }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch accounts", err);
+      }
+    };
+    fetchAccounts();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleAccountChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      initial_account: {
-        ...prev.initial_account!,
-        [name]: value,
-      },
+      [name]: name === "amount" ? parseFloat(value) || 0 : value,
     }));
   };
 
@@ -52,11 +56,13 @@ export default function NewClientPage() {
     setError(null);
 
     try {
-      await api.clients.create(formData);
-      router.push("/clients");
+      await api.transactions.create(formData);
+      router.push("/transactions");
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Error al crear el cliente";
+        err instanceof Error
+          ? err.message
+          : "Error al registrar la transacción";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -67,15 +73,15 @@ export default function NewClientPage() {
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="mb-6">
         <Link
-          href="/clients"
+          href="/transactions"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Volver a Clientes
+          Volver a Transacciones
         </Link>
         <PageHeader
-          title="Registrar Nuevo Cliente"
-          description="Complete la información para dar de alta un nuevo cliente y su cuenta inicial."
+          title="Registrar Nueva Transacción"
+          description="Complete la información para registrar una nueva transacción en el sistema."
         />
       </div>
 
@@ -96,62 +102,138 @@ export default function NewClientPage() {
         <div className="bg-card shadow-zen rounded-3xl border border-border overflow-hidden">
           <div className="px-6 py-8 sm:p-10">
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-4">
                 <label
-                  htmlFor="document_type"
+                  htmlFor="account_id"
                   className="block text-sm font-medium leading-6 text-foreground"
                 >
-                  Tipo de Documento
+                  Cuenta
                 </label>
                 <div className="mt-2">
                   <select
-                    id="document_type"
-                    name="document_type"
-                    value={formData.document_type}
+                    id="account_id"
+                    name="account_id"
+                    required
+                    value={formData.account_id}
                     onChange={handleChange}
                     className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
                   >
-                    <option value="DNI">DNI</option>
-                    <option value="PASSPORT">Pasaporte</option>
-                    <option value="RUC">RUC</option>
+                    <option value="" disabled>
+                      Seleccione una cuenta
+                    </option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.account_number} - {account.client_name} (
+                        {account.currency})
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div className="sm:col-span-4">
+              <div className="sm:col-span-2">
                 <label
-                  htmlFor="document_number"
+                  htmlFor="operation_type"
                   className="block text-sm font-medium leading-6 text-foreground"
                 >
-                  Número de Documento
+                  Tipo de Operación
+                </label>
+                <div className="mt-2">
+                  <select
+                    id="operation_type"
+                    name="operation_type"
+                    value={formData.operation_type}
+                    onChange={handleChange}
+                    className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
+                  >
+                    <option value="purchase">Compra</option>
+                    <option value="deposit">Depósito</option>
+                    <option value="withdrawal">Retiro</option>
+                    <option value="transfer">Transferencia</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium leading-6 text-foreground"
+                >
+                  Monto
                 </label>
                 <div className="mt-2">
                   <input
-                    type="text"
-                    name="document_number"
-                    id="document_number"
+                    type="number"
+                    name="amount"
+                    id="amount"
                     required
-                    value={formData.document_number}
+                    min="0.01"
+                    step="0.01"
+                    value={formData.amount}
                     onChange={handleChange}
                     className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
                   />
                 </div>
               </div>
 
-              <div className="sm:col-span-6">
+              <div className="sm:col-span-2">
                 <label
-                  htmlFor="full_name"
+                  htmlFor="currency"
                   className="block text-sm font-medium leading-6 text-foreground"
                 >
-                  Nombre Completo
+                  Moneda
+                </label>
+                <div className="mt-2">
+                  <select
+                    id="currency"
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleChange}
+                    className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
+                  >
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="PEN">PEN</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor="channel"
+                  className="block text-sm font-medium leading-6 text-foreground"
+                >
+                  Canal
+                </label>
+                <div className="mt-2">
+                  <select
+                    id="channel"
+                    name="channel"
+                    value={formData.channel}
+                    onChange={handleChange}
+                    className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
+                  >
+                    <option value="mobile">Banca Móvil</option>
+                    <option value="web">Banca por Internet</option>
+                    <option value="atm">Cajero Automático</option>
+                    <option value="branch">Agencia</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="sm:col-span-3">
+                <label
+                  htmlFor="merchant"
+                  className="block text-sm font-medium leading-6 text-foreground"
+                >
+                  Comercio / Destinatario
                 </label>
                 <div className="mt-2">
                   <input
                     type="text"
-                    name="full_name"
-                    id="full_name"
-                    required
-                    value={formData.full_name}
+                    name="merchant"
+                    id="merchant"
+                    value={formData.merchant}
                     onChange={handleChange}
                     className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
                   />
@@ -160,18 +242,17 @@ export default function NewClientPage() {
 
               <div className="sm:col-span-3">
                 <label
-                  htmlFor="email"
+                  htmlFor="country"
                   className="block text-sm font-medium leading-6 text-foreground"
                 >
-                  Correo Electrónico
+                  País
                 </label>
                 <div className="mt-2">
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={formData.email}
+                    type="text"
+                    name="country"
+                    id="country"
+                    value={formData.country}
                     onChange={handleChange}
                     className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
                   />
@@ -180,98 +261,27 @@ export default function NewClientPage() {
 
               <div className="sm:col-span-3">
                 <label
-                  htmlFor="phone"
+                  htmlFor="city"
                   className="block text-sm font-medium leading-6 text-foreground"
                 >
-                  Teléfono
+                  Ciudad
                 </label>
                 <div className="mt-2">
                   <input
                     type="text"
-                    name="phone"
-                    id="phone"
-                    required
-                    value={formData.phone}
+                    name="city"
+                    id="city"
+                    value={formData.city}
                     onChange={handleChange}
                     className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
                   />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-10 border-t border-border pt-10">
-              <h3 className="text-base font-semibold leading-7 text-foreground mb-4">
-                Cuenta Inicial
-              </h3>
-              <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                <div className="sm:col-span-3">
-                  <label
-                    htmlFor="account_number"
-                    className="block text-sm font-medium leading-6 text-foreground"
-                  >
-                    Número de Cuenta
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      name="account_number"
-                      id="account_number"
-                      required
-                      value={formData.initial_account?.account_number}
-                      onChange={handleAccountChange}
-                      className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label
-                    htmlFor="account_type"
-                    className="block text-sm font-medium leading-6 text-foreground"
-                  >
-                    Tipo de Cuenta
-                  </label>
-                  <div className="mt-2">
-                    <select
-                      id="account_type"
-                      name="account_type"
-                      value={formData.initial_account?.account_type}
-                      onChange={handleAccountChange}
-                      className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
-                    >
-                      <option value="savings">Ahorros</option>
-                      <option value="checking">Corriente</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="sm:col-span-1">
-                  <label
-                    htmlFor="currency"
-                    className="block text-sm font-medium leading-6 text-foreground"
-                  >
-                    Moneda
-                  </label>
-                  <div className="mt-2">
-                    <select
-                      id="currency"
-                      name="currency"
-                      value={formData.initial_account?.currency}
-                      onChange={handleAccountChange}
-                      className="block w-full rounded-xl border border-input bg-background py-2.5 text-foreground shadow-sm focus:border-ring focus:ring-1 focus:ring-ring sm:text-sm sm:leading-6 outline-none transition-all"
-                    >
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="PEN">PEN</option>
-                    </select>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
           <div className="flex items-center justify-end gap-x-6 border-t border-border px-6 py-6 bg-secondary/30">
             <Link
-              href="/clients"
+              href="/transactions"
               className="text-sm font-semibold leading-6 text-foreground hover:text-foreground/80 transition-colors"
             >
               Cancelar
@@ -289,7 +299,7 @@ export default function NewClientPage() {
               ) : (
                 <>
                   <Save className="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
-                  Guardar Cliente
+                  Registrar Transacción
                 </>
               )}
             </button>

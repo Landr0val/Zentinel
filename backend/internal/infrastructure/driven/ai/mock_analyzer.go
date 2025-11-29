@@ -9,8 +9,10 @@ import (
 	"zentinel/internal/domain/entity"
 	"zentinel/internal/domain/enums"
 	"zentinel/internal/domain/service"
+	"zentinel/pkg/logger"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type MockAnalyzer struct{}
@@ -19,9 +21,25 @@ func NewMockAnalyzer() service.AIService {
 	return &MockAnalyzer{}
 }
 
-func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *entity.Transaction, client *entity.Client, account *entity.Account, history []*entity.Transaction) (*service.FraudAnalysisResult, error) {
+func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *entity.Transaction, client *entity.Client, account *entity.Account, history []*entity.Transaction, currencyCode string) (*service.FraudAnalysisResult, error) {
+	logger.Info("Starting AI analysis", zap.Float64("amount", transaction.Amount), zap.String("currency", currencyCode))
+
 	score := 0
 	var factors []string
+
+	// 0. Regla de Negocio: Monto alto (> 10,000 USD/EUR o equivalente en PEN)
+	threshold := 10000.0
+	if currencyCode == "PEN" {
+		threshold = 37500.0 // Tipo de cambio aproximado
+	}
+
+	isHighAmount := false
+	if transaction.Amount > threshold {
+		logger.Info("High amount detected", zap.Float64("amount", transaction.Amount), zap.Float64("threshold", threshold))
+		score += 90
+		isHighAmount = true
+		factors = append(factors, fmt.Sprintf("Monto excede el límite de seguridad de %.2f %s", threshold, currencyCode))
+	}
 
 	// 1. Monto inusual: Monto > 3x promedio histórico
 	avgAmount := calculateAverageAmount(history)
@@ -85,11 +103,15 @@ func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *enti
 	}
 
 	explanation := "Análisis completado. "
-	if len(factors) > 0 {
+	if isHighAmount {
+		explanation = fmt.Sprintf("IA SECURITY ALERT: Se ha detectado una transacción de %.2f %s que supera el umbral de seguridad de 10,000 USD (o equivalente). Este patrón es altamente correlacionado con intentos de evasión de controles financieros. El sistema ha bloqueado preventivamente la operación y requiere revisión manual inmediata del oficial de cumplimiento.", transaction.Amount, currencyCode)
+	} else if len(factors) > 0 {
 		explanation += "Factores de riesgo detectados: " + strings.Join(factors, ", ") + "."
 	} else {
 		explanation += "No se detectaron factores de riesgo significativos."
 	}
+
+	logger.Info("AI analysis completed", zap.Int("score", score), zap.String("risk_level", string(riskLevel)))
 
 	return &service.FraudAnalysisResult{
 		RiskScore:   score,

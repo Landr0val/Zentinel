@@ -20,6 +20,7 @@ type CreateTransactionRequest struct {
 
 type TransactionResponse struct {
 	ID            uuid.UUID               `json:"id"`
+	Code          string                  `json:"code"`
 	AccountID     uuid.UUID               `json:"account_id"`
 	Amount        float64                 `json:"amount"`
 	Currency      string                  `json:"currency"`

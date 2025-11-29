@@ -46,6 +46,7 @@ func ToAccountEntity(m *model.AccountModel) *entity.Account {
 	return &entity.Account{
 		ID:            m.ID,
 		ClientID:      m.ClientID,
+		ClientName:    m.Client.FullName,
 		AccountNumber: m.AccountNumber,
 		AccountTypeID: m.AccountTypeID,
 		CurrencyID:    m.CurrencyID,

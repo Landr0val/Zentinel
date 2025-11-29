@@ -35,7 +35,8 @@ func NewAccountUseCase(accountRepo repository.AccountRepository, clientRepo repo
 // <PARAMETERS> ctx: context.Context - The context for the operation.
 // <RETURNS> (*dto.AccountResponse, error) - The created account response or an error if the operation fails.
 func (s *AccountUseCase) CreateAccount(ctx context.Context, req dto.CreateAccountRequest) (*dto.AccountResponse, error) {
-	if _, err := s.clientRepo.FindByID(ctx, req.ClientID); err != nil {
+	client, err := s.clientRepo.FindByID(ctx, req.ClientID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -66,6 +67,7 @@ func (s *AccountUseCase) CreateAccount(ctx context.Context, req dto.CreateAccoun
 	account := &entity.Account{
 		ID:            uuid.New(),
 		ClientID:      req.ClientID,
+		ClientName:    client.FullName,
 		AccountNumber: req.AccountNumber,
 		AccountTypeID: accountTypeCat.ID,
 		CurrencyID:    currencyCat.ID,
@@ -84,6 +86,14 @@ func (s *AccountUseCase) CreateAccount(ctx context.Context, req dto.CreateAccoun
 
 func (s *AccountUseCase) GetAccount(ctx context.Context, id uuid.UUID) (*dto.AccountResponse, error) {
 	account, err := s.accountRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return s.mapToResponse(ctx, account)
+}
+
+func (s *AccountUseCase) GetAccountByNumber(ctx context.Context, number string) (*dto.AccountResponse, error) {
+	account, err := s.accountRepo.FindByAccountNumber(ctx, number)
 	if err != nil {
 		return nil, err
 	}
@@ -134,6 +144,15 @@ func (s *AccountUseCase) ListAccounts(ctx context.Context, page, pageSize int) (
 }
 
 func (s *AccountUseCase) mapToResponse(ctx context.Context, account *entity.Account) (*dto.AccountResponse, error) {
+	clientName := account.ClientName
+	if clientName == "" {
+		client, err := s.clientRepo.FindByID(ctx, account.ClientID)
+		if err != nil {
+			return nil, err
+		}
+		clientName = client.FullName
+	}
+
 	accountTypeCat, err := s.catalogueRepo.GetByID(ctx, account.AccountTypeID)
 	if err != nil {
 		return nil, err
@@ -167,6 +186,7 @@ func (s *AccountUseCase) mapToResponse(ctx context.Context, account *entity.Acco
 	return &dto.AccountResponse{
 		ID:            account.ID,
 		ClientID:      account.ClientID,
+		ClientName:    clientName,
 		AccountNumber: account.AccountNumber,
 		AccountType:   accountTypeCode,
 		Currency:      currencyCode,

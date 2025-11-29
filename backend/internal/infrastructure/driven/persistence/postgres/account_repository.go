@@ -50,7 +50,7 @@ func (r *AccountRepository) Save(ctx context.Context, account *entity.Account) e
 
 func (r *AccountRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Account, error) {
 	var accountModel model.AccountModel
-	result := r.db.WithContext(ctx).First(&accountModel, "id = ?", id)
+	result := r.db.WithContext(ctx).Preload("Client").First(&accountModel, "id = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
@@ -62,7 +62,7 @@ func (r *AccountRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity
 
 func (r *AccountRepository) FindByAccountNumber(ctx context.Context, number string) (*entity.Account, error) {
 	var accountModel model.AccountModel
-	result := r.db.WithContext(ctx).First(&accountModel, "account_number = ?", number)
+	result := r.db.WithContext(ctx).Preload("Client").First(&accountModel, "account_number = ?", number)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, domain.ErrNotFound
@@ -74,7 +74,7 @@ func (r *AccountRepository) FindByAccountNumber(ctx context.Context, number stri
 
 func (r *AccountRepository) FindByClientID(ctx context.Context, clientID uuid.UUID) ([]*entity.Account, error) {
 	var accountModels []model.AccountModel
-	result := r.db.WithContext(ctx).Where("client_id = ?", clientID).Find(&accountModels)
+	result := r.db.WithContext(ctx).Preload("Client").Where("client_id = ?", clientID).Find(&accountModels)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -97,7 +97,7 @@ func (r *AccountRepository) FindAll(ctx context.Context, page int, pageSize int)
 		return nil, 0, err
 	}
 
-	result := r.db.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&accountModels)
+	result := r.db.WithContext(ctx).Preload("Client").Offset(offset).Limit(pageSize).Find(&accountModels)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}

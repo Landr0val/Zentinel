@@ -3,9 +3,11 @@ import {
   Alert,
   ApiResponse,
   Client,
+  CreateClientRequest,
+  CreateTransactionRequest,
   DashboardStats,
   Transaction,
-} from "@/types";
+} from "../types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
@@ -48,7 +50,7 @@ export const api = {
       return fetcher<ApiResponse<Client[]>>(`/clients?${searchParams.toString()}`);
     },
     get: (id: string) => fetcher<ApiResponse<Client>>(`/clients/${id}`),
-    create: (data: Partial<Client>) =>
+    create: (data: CreateClientRequest) =>
       fetcher<ApiResponse<Client>>("/clients", {
         method: "POST",
         body: JSON.stringify(data),
@@ -100,7 +102,7 @@ export const api = {
       );
     },
     get: (id: string) => fetcher<ApiResponse<Transaction>>(`/transactions/${id}`),
-    create: (data: Partial<Transaction>) =>
+    create: (data: CreateTransactionRequest) =>
       fetcher<ApiResponse<Transaction>>("/transactions", {
         method: "POST",
         body: JSON.stringify(data),

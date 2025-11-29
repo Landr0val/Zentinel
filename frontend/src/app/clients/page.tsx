@@ -1,11 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Search, Filter, MoreHorizontal, Loader2 } from "lucide-react";
-import PageHeader from "@/components/PageHeader";
+import {
+  Plus,
+  Search,
+  Filter,
+  MoreHorizontal,
+  Loader2,
+  User,
+  Mail,
+  Phone,
+} from "lucide-react";
+import PageHeader from "../../components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import { useState } from "react";
+import { cn } from "../../lib/utils";
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,14 +29,14 @@ export default function ClientsPage() {
   const clients = data?.data || [];
 
   return (
-    <div>
+    <div className="animate-in fade-in duration-500">
       <PageHeader
         title="Clientes"
-        description="Gestión de clientes y perfiles de riesgo."
+        description="Gestión de perfiles y riesgo."
         action={
           <Link
             href="/clients/new"
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-zen hover:bg-primary/90 transition-colors"
           >
             <Plus className="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
             Nuevo Cliente
@@ -35,82 +45,83 @@ export default function ClientsPage() {
       />
 
       {/* Filters */}
-      <div className="mb-6 flex items-center justify-between gap-4 rounded-lg bg-white p-4 shadow-sm border border-slate-100">
-        <div className="relative flex-1 max-w-md">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md group">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <Search className="h-5 w-5 text-slate-400" aria-hidden="true" />
+            <Search
+              className="h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors"
+              aria-hidden="true"
+            />
           </div>
           <input
             type="text"
-            className="block w-full rounded-md border-0 py-1.5 pl-10 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-            placeholder="Buscar por nombre, email o teléfono..."
+            className="block w-full rounded-xl border border-border bg-card py-2.5 pl-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-0 transition-all shadow-sm hover:border-foreground/50 outline-none"
+            placeholder="Buscar por nombre, email o documento..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
-          <Filter className="h-4 w-4 text-slate-500" />
-          Filtros
-        </button>
+        <div className="flex gap-3">
+          <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-secondary transition-colors">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            Filtros
+          </button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm border border-slate-100">
+      <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-zen">
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-red-500">
-            Error al cargar los clientes. Por favor intente nuevamente.
+          <div className="p-12 text-center">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
+              <User className="h-5 w-5" />
+            </div>
+            <h3 className="text-lg font-medium text-foreground">
+              Error al cargar
+            </h3>
+            <p className="text-muted-foreground mt-1">
+              No se pudieron obtener los clientes.
+            </p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-secondary/30 text-muted-foreground font-medium">
                   <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
-                    >
+                    <th scope="col" className="px-6 py-4 font-medium">
                       Cliente
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
-                    >
+                    <th scope="col" className="px-6 py-4 font-medium">
                       Contacto
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
-                    >
+                    <th scope="col" className="px-6 py-4 font-medium">
                       Estado
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
-                    >
+                    <th scope="col" className="px-6 py-4 font-medium">
                       Riesgo
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
-                    >
+                    <th scope="col" className="px-6 py-4 font-medium">
                       Fecha Registro
                     </th>
-                    <th scope="col" className="relative px-6 py-3">
-                      <span className="sr-only">Acciones</span>
+                    <th
+                      scope="col"
+                      className="px-6 py-4 font-medium text-right"
+                    >
+                      Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
+                <tbody className="divide-y divide-border">
                   {clients.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
-                        className="px-6 py-12 text-center text-slate-500"
+                        className="px-6 py-16 text-center text-muted-foreground"
                       >
                         No se encontraron clientes.
                       </td>
@@ -119,40 +130,45 @@ export default function ClientsPage() {
                     clients.map((client) => (
                       <tr
                         key={client.id}
-                        className="hover:bg-slate-50 transition-colors"
+                        className="group hover:bg-secondary/40 transition-colors"
                       >
-                        <td className="whitespace-nowrap px-6 py-4">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground font-medium border border-border">
                               {client.full_name.charAt(0)}
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-slate-900">
+                            <div>
+                              <div className="font-medium text-foreground">
                                 {client.full_name}
                               </div>
-                              <div className="text-sm text-slate-500">
-                                ID: {client.id}
+                              <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                                {client.document_type}: {client.document_number}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4">
-                          <div className="text-sm text-slate-900">
-                            {client.email}
-                          </div>
-                          <div className="text-sm text-slate-500">
-                            {client.phone}
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Mail className="h-3 w-3" />
+                              <span>{client.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Phone className="h-3 w-3" />
+                              <span>{client.phone}</span>
+                            </div>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4">
+                        <td className="px-6 py-4">
                           <span
-                            className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                            className={cn(
+                              "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
                               client.status === "active"
-                                ? "bg-green-100 text-green-800"
+                                ? "bg-secondary text-foreground ring-border"
                                 : client.status === "inactive"
-                                  ? "bg-slate-100 text-slate-800"
-                                  : "bg-red-100 text-red-800"
-                            }`}
+                                  ? "bg-secondary/50 text-muted-foreground ring-border/50"
+                                  : "bg-destructive/10 text-destructive ring-destructive/20",
+                            )}
                           >
                             {client.status === "active"
                               ? "Activo"
@@ -161,15 +177,16 @@ export default function ClientsPage() {
                                 : "Bloqueado"}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4">
+                        <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
                               client.risk_level === "low"
-                                ? "bg-green-50 text-green-700 ring-green-600/20"
+                                ? "bg-secondary/50 text-muted-foreground ring-border/50"
                                 : client.risk_level === "medium"
-                                  ? "bg-yellow-50 text-yellow-800 ring-yellow-600/20"
-                                  : "bg-red-50 text-red-700 ring-red-600/20"
-                            }`}
+                                  ? "bg-secondary text-foreground ring-border"
+                                  : "bg-destructive/10 text-destructive ring-destructive/20",
+                            )}
                           >
                             {client.risk_level === "low"
                               ? "Bajo"
@@ -178,15 +195,15 @@ export default function ClientsPage() {
                                 : "Alto"}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
+                        <td className="px-6 py-4 text-muted-foreground text-xs">
                           {new Date(client.created_at).toLocaleDateString()}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                        <td className="px-6 py-4 text-right">
                           <Link
                             href={`/clients/${client.id}`}
-                            className="text-slate-400 hover:text-blue-600"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                           >
-                            <MoreHorizontal className="h-5 w-5" />
+                            <MoreHorizontal className="h-4 w-4" />
                           </Link>
                         </td>
                       </tr>
@@ -196,68 +213,24 @@ export default function ClientsPage() {
               </table>
             </div>
 
-            {/* Pagination (Placeholder - API needs to support pagination metadata return) */}
+            {/* Pagination */}
             {clients.length > 0 && (
-              <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
-                <div className="flex flex-1 justify-between sm:hidden">
-                  <button className="relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <div className="flex items-center justify-between border-t border-border px-6 py-4">
+                <div className="text-xs text-muted-foreground">
+                  Mostrando{" "}
+                  <span className="font-medium text-foreground">1</span> a{" "}
+                  <span className="font-medium text-foreground">
+                    {clients.length}
+                  </span>{" "}
+                  resultados
+                </div>
+                <div className="flex gap-2">
+                  <button className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors disabled:opacity-50">
                     Anterior
                   </button>
-                  <button className="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  <button className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors disabled:opacity-50">
                     Siguiente
                   </button>
-                </div>
-                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm text-slate-700">
-                      Mostrando <span className="font-medium">1</span> a{" "}
-                      <span className="font-medium">{clients.length}</span>{" "}
-                      resultados
-                    </p>
-                  </div>
-                  <div>
-                    <nav
-                      className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                      aria-label="Pagination"
-                    >
-                      <button className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">
-                        <span className="sr-only">Anterior</span>
-                        <svg
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        aria-current="page"
-                        className="relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                      >
-                        1
-                      </button>
-                      <button className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">
-                        <span className="sr-only">Siguiente</span>
-                        <svg
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </nav>
-                  </div>
                 </div>
               </div>
             )}

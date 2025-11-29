@@ -8,13 +8,9 @@ import {
   CreditCard,
   Activity,
   AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from "../lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -28,35 +24,41 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full w-64 flex-col bg-slate-900 text-white fixed left-0 top-0 bottom-0 z-50">
-      <div className="flex h-16 items-center px-6 border-b border-slate-800">
-        <div className="flex items-center gap-2 font-bold text-xl tracking-wider text-blue-500">
-          <Activity className="h-6 w-6" />
-          <span className="text-white">ZENTINEL</span>
+    <aside className="flex h-full w-64 flex-col bg-card border-r border-border fixed left-0 top-0 bottom-0 z-50 transition-colors duration-300">
+      <div className="flex h-24 items-center px-6">
+        <div className="flex items-center gap-3 group">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-zen transition-transform group-hover:scale-105">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <span className="text-lg font-bold tracking-tight text-foreground">
+            ZENTINEL
+          </span>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
+
+      <nav className="flex-1 space-y-2 px-4 py-6 overflow-y-auto">
         {navigation.map((item) => {
           const isActive =
             pathname === item.href ||
             (item.href !== "/" && pathname.startsWith(item.href));
+
           return (
             <Link
               key={item.name}
               href={item.href}
               className={cn(
-                "group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ease-out",
                 isActive
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-white",
+                  ? "bg-primary text-primary-foreground shadow-zen translate-x-1"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground hover:translate-x-1",
               )}
             >
               <item.icon
                 className={cn(
-                  "mr-3 h-5 w-5 shrink-0 transition-colors",
+                  "h-5 w-5 shrink-0 transition-colors",
                   isActive
-                    ? "text-white"
-                    : "text-slate-400 group-hover:text-white",
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground group-hover:text-foreground",
                 )}
                 aria-hidden="true"
               />
@@ -65,9 +67,14 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-4 border-t border-slate-800">
-        <p className="text-xs text-slate-500 text-center">v1.0.0</p>
+
+      <div className="p-6 border-t border-border">
+        <div className="flex items-center justify-center">
+          <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-widest">
+            v1.0.0
+          </p>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 }

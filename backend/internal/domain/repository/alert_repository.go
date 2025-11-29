@@ -8,11 +8,19 @@ import (
 	"github.com/google/uuid"
 )
 
+type AlertFilter struct {
+	Page     int
+	PageSize int
+	Search   string
+	Status   *enums.AlertStatus
+	Severity *enums.AlertSeverity
+}
+
 type AlertRepository interface {
 	Save(ctx context.Context, alert *entity.Alert) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Alert, error)
 	FindByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]*entity.Alert, error)
-	FindAll(ctx context.Context, page int, pageSize int) ([]*entity.Alert, int64, error)
+	FindAll(ctx context.Context, filter AlertFilter) ([]*entity.Alert, int64, error)
 	CountByStatus(ctx context.Context) (map[enums.AlertStatus]int64, error)
 	Update(ctx context.Context, alert *entity.Alert) error
 }
