@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"zentinel/internal/domain"
 	"zentinel/internal/domain/entity"
 	"zentinel/internal/domain/repository"
 	"zentinel/internal/infrastructure/driven/persistence/postgres/mapper"
@@ -31,7 +32,7 @@ func (r *ClientRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.
 	result := r.db.WithContext(ctx).First(&clientModel, "id = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, domain.ErrNotFound
 		}
 		return nil, result.Error
 	}

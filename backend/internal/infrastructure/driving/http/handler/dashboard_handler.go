@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"zentinel/internal/application/port"
 	"zentinel/internal/infrastructure/driving/http/dto/response"
+	"zentinel/internal/infrastructure/driving/http/errorhandler"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +22,7 @@ func NewDashboardHandler(dashboardUseCase port.DashboardUseCase) *DashboardHandl
 func (h *DashboardHandler) GetStats(c *gin.Context) {
 	stats, err := h.dashboardUseCase.GetStats(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to get dashboard stats", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 

@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"zentinel/internal/application/dto"
 	"zentinel/internal/application/port"
+	"zentinel/internal/domain"
 	"zentinel/internal/infrastructure/driving/http/dto/response"
+	"zentinel/internal/infrastructure/driving/http/errorhandler"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,13 +26,13 @@ func NewAlertHandler(alertUseCase port.AlertUseCase) *AlertHandler {
 func (h *AlertHandler) Create(c *gin.Context) {
 	var req dto.CreateAlertRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("INVALID_REQUEST", "Invalid request body", err.Error()))
+		errorhandler.HandleRequestError(c, err)
 		return
 	}
 
 	alert, err := h.alertUseCase.CreateAlert(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to create alert", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
@@ -47,12 +49,12 @@ func (h *AlertHandler) Get(c *gin.Context) {
 
 	alert, err := h.alertUseCase.GetAlert(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to get alert", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
 	if alert == nil {
-		c.JSON(http.StatusNotFound, response.NewErrorResponse("NOT_FOUND", "Alert not found", ""))
+		errorhandler.HandleDomainError(c, domain.ErrNotFound)
 		return
 	}
 
@@ -75,7 +77,7 @@ func (h *AlertHandler) List(c *gin.Context) {
 
 	alerts, total, err := h.alertUseCase.ListAlerts(c.Request.Context(), page, pageSize)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to list alerts", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
@@ -92,13 +94,13 @@ func (h *AlertHandler) UpdateStatus(c *gin.Context) {
 
 	var req dto.UpdateAlertStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("INVALID_REQUEST", "Invalid request body", err.Error()))
+		errorhandler.HandleRequestError(c, err)
 		return
 	}
 
 	alert, err := h.alertUseCase.UpdateAlertStatus(c.Request.Context(), id, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to update alert status", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 

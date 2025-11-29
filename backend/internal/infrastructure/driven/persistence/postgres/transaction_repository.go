@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"time"
+	"zentinel/internal/domain"
 	"zentinel/internal/domain/entity"
 	"zentinel/internal/domain/repository"
 	"zentinel/internal/infrastructure/driven/persistence/postgres/mapper"
@@ -32,7 +33,7 @@ func (r *TransactionRepository) FindByID(ctx context.Context, id uuid.UUID) (*en
 	result := r.db.WithContext(ctx).First(&transactionModel, "id = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, domain.ErrNotFound
 		}
 		return nil, result.Error
 	}
@@ -77,11 +78,8 @@ func (r *TransactionRepository) FindAll(ctx context.Context, filter repository.T
 
 	query := r.db.WithContext(ctx).Model(&model.TransactionModel{})
 
-	if filter.FromDate != nil {
-		query = query.Where("created_at >= ?", *filter.FromDate)
-	}
-	if filter.ToDate != nil {
-		query = query.Where("created_at <= ?", *filter.ToDate)
+	if filter.AccountID != nil {
+		query = query.Where("account_id = ?", filter.AccountID)
 	}
 	if filter.OperationType != nil {
 		query = query.Where("operation_type = ?", *filter.OperationType)
@@ -92,8 +90,11 @@ func (r *TransactionRepository) FindAll(ctx context.Context, filter repository.T
 	if filter.IsFlagged != nil {
 		query = query.Where("is_flagged = ?", *filter.IsFlagged)
 	}
-	if filter.AccountID != nil {
-		query = query.Where("account_id = ?", *filter.AccountID)
+	if filter.FromDate != nil {
+		query = query.Where("created_at >= ?", *filter.FromDate)
+	}
+	if filter.ToDate != nil {
+		query = query.Where("created_at <= ?", *filter.ToDate)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -101,7 +102,7 @@ func (r *TransactionRepository) FindAll(ctx context.Context, filter repository.T
 	}
 
 	offset := (filter.Page - 1) * filter.PageSize
-	result := query.Offset(offset).Limit(filter.PageSize).Find(&transactionModels)
+	result := query.Offset(offset).Limit(filter.PageSize).Order("created_at desc").Find(&transactionModels)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}

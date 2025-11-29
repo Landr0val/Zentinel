@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"zentinel/internal/domain"
 	"zentinel/internal/domain/entity"
 	"zentinel/internal/domain/enums"
 	"zentinel/internal/domain/repository"
@@ -32,7 +33,7 @@ func (r *AlertRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.A
 	result := r.db.WithContext(ctx).First(&alertModel, "id = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, domain.ErrNotFound
 		}
 		return nil, result.Error
 	}
@@ -64,7 +65,7 @@ func (r *AlertRepository) FindAll(ctx context.Context, page int, pageSize int) (
 		return nil, 0, err
 	}
 
-	result := r.db.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&alertModels)
+	result := r.db.WithContext(ctx).Offset(offset).Limit(pageSize).Order("created_at desc").Find(&alertModels)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
@@ -104,4 +105,10 @@ func (r *AlertRepository) Update(ctx context.Context, alert *entity.Alert) error
 	alertModel := mapper.ToAlertModel(alert)
 	result := r.db.WithContext(ctx).Save(alertModel)
 	return result.Error
+}
+
+func (r *AlertRepository) CountActive(ctx context.Context) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.AlertModel{}).Where("status != ?", "resolved").Count(&count).Error
+	return count, err
 }

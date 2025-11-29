@@ -3,10 +3,10 @@ package domain
 import "errors"
 
 var (
-	ErrInternal          = errors.New("internal server error")
-	ErrNotFound          = errors.New("resource not found")
-	ErrInvalidData       = errors.New("invalid data provided")
-	ErrInsufficientFunds = errors.New("insufficient funds")
-	ErrAccountBlocked    = errors.New("account is blocked")
-	ErrTransactionFailed = errors.New("transaction failed")
+	ErrNotFound           = errors.New("resource not found")
+	ErrConflict           = errors.New("resource already exists")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUnauthorized       = errors.New("unauthorized access")
+	ErrInternal           = errors.New("internal server error")
+	ErrInvalidInput       = errors.New("invalid input data")
 )

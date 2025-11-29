@@ -6,9 +6,11 @@ import (
 	"time"
 	"zentinel/internal/application/dto"
 	"zentinel/internal/application/port"
+	"zentinel/internal/domain"
 	"zentinel/internal/domain/enums"
 	"zentinel/internal/domain/repository"
 	"zentinel/internal/infrastructure/driving/http/dto/response"
+	"zentinel/internal/infrastructure/driving/http/errorhandler"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -27,13 +29,13 @@ func NewTransactionHandler(transactionUseCase port.TransactionUseCase) *Transact
 func (h *TransactionHandler) Create(c *gin.Context) {
 	var req dto.CreateTransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("INVALID_REQUEST", "Invalid request body", err.Error()))
+		errorhandler.HandleRequestError(c, err)
 		return
 	}
 
 	transaction, err := h.transactionUseCase.CreateTransaction(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to create transaction", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
@@ -50,12 +52,12 @@ func (h *TransactionHandler) Get(c *gin.Context) {
 
 	transaction, err := h.transactionUseCase.GetTransaction(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to get transaction", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
 	if transaction == nil {
-		c.JSON(http.StatusNotFound, response.NewErrorResponse("NOT_FOUND", "Transaction not found", ""))
+		errorhandler.HandleDomainError(c, domain.ErrNotFound)
 		return
 	}
 
@@ -116,7 +118,7 @@ func (h *TransactionHandler) List(c *gin.Context) {
 
 	transactions, total, err := h.transactionUseCase.ListTransactions(c.Request.Context(), filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to list transactions", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
@@ -133,7 +135,7 @@ func (h *TransactionHandler) Analyze(c *gin.Context) {
 
 	transaction, err := h.transactionUseCase.AnalyzeTransaction(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to analyze transaction", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 

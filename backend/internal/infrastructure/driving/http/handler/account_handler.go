@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"zentinel/internal/application/dto"
 	"zentinel/internal/application/port"
+	"zentinel/internal/domain"
 	"zentinel/internal/infrastructure/driving/http/dto/response"
+	"zentinel/internal/infrastructure/driving/http/errorhandler"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,13 +26,13 @@ func NewAccountHandler(accountUseCase port.AccountUseCase) *AccountHandler {
 func (h *AccountHandler) Create(c *gin.Context) {
 	var req dto.CreateAccountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("INVALID_REQUEST", "Invalid request body", err.Error()))
+		errorhandler.HandleRequestError(c, err)
 		return
 	}
 
 	account, err := h.accountUseCase.CreateAccount(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to create account", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
@@ -47,12 +49,12 @@ func (h *AccountHandler) Get(c *gin.Context) {
 
 	account, err := h.accountUseCase.GetAccount(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to get account", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
 	if account == nil {
-		c.JSON(http.StatusNotFound, response.NewErrorResponse("NOT_FOUND", "Account not found", ""))
+		errorhandler.HandleDomainError(c, domain.ErrNotFound)
 		return
 	}
 
@@ -69,13 +71,13 @@ func (h *AccountHandler) Update(c *gin.Context) {
 
 	var req dto.UpdateAccountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.NewErrorResponse("INVALID_REQUEST", "Invalid request body", err.Error()))
+		errorhandler.HandleRequestError(c, err)
 		return
 	}
 
 	account, err := h.accountUseCase.UpdateAccount(c.Request.Context(), id, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to update account", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
@@ -98,7 +100,7 @@ func (h *AccountHandler) List(c *gin.Context) {
 
 	accounts, total, err := h.accountUseCase.ListAccounts(c.Request.Context(), page, pageSize)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, response.NewErrorResponse("INTERNAL_ERROR", "Failed to list accounts", err.Error()))
+		errorhandler.HandleDomainError(c, err)
 		return
 	}
 
