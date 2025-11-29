@@ -1,17 +1,17 @@
-package domain
+package entity
 
 import (
 	"time"
 	"zentinel/internal/domain/enums"
+	"zentinel/internal/domain/valueobject"
 
 	"github.com/google/uuid"
 )
 
 type Transaction struct {
 	ID            uuid.UUID
-	AccountID     *uuid.UUID
-	Amount        float64
-	Currency      string
+	AccountID     uuid.UUID
+	Amount        valueobject.Money
 	OperationType enums.OperationType
 	Channel       enums.Channel
 	Merchant      string

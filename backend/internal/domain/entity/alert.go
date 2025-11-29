@@ -1,4 +1,4 @@
-package domain
+package entity
 
 import (
 	"time"
@@ -9,7 +9,7 @@ import (
 
 type Alert struct {
 	ID            uuid.UUID
-	TransactionID uuid.UUID
+	TransactionID *uuid.UUID
 	ClientID      uuid.UUID
 	AlertType     enums.AlertType
 	Severity      enums.AlertSeverity

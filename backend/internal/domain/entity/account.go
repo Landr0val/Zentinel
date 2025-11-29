@@ -1,8 +1,9 @@
-package domain
+package entity
 
 import (
 	"time"
 	"zentinel/internal/domain/enums"
+	"zentinel/internal/domain/valueobject"
 
 	"github.com/google/uuid"
 )
@@ -12,9 +13,8 @@ type Account struct {
 	ClientID      uuid.UUID
 	AccountNumber string
 	AccountType   enums.AccountType
-	Currency      string
-	Balance       float64
+	Balance       valueobject.Money
 	Status        enums.AccountStatus
 	CreatedAt     time.Time
-	UpdatedAt     *time.Time
+	UpdatedAt     time.Time
 }
