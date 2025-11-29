@@ -43,14 +43,15 @@ func main() {
 	accountRepo := postgres.NewAccountRepository(db)
 	transactionRepo := postgres.NewTransactionRepository(db)
 	alertRepo := postgres.NewAlertRepository(db)
+	catalogueRepo := postgres.NewCatalogueRepository(db)
 
 	aiService := ai.NewMockAnalyzer()
 
 	// 5. Initialize Application Layer (Use Cases)
-	clientUseCase := usecase.NewClientUseCase(clientRepo, accountRepo)
-	accountUseCase := usecase.NewAccountUseCase(accountRepo, clientRepo)
-	alertUseCase := usecase.NewAlertUseCase(alertRepo)
-	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, accountRepo, clientRepo, alertRepo, aiService)
+	clientUseCase := usecase.NewClientUseCase(clientRepo, accountRepo, catalogueRepo)
+	accountUseCase := usecase.NewAccountUseCase(accountRepo, clientRepo, catalogueRepo)
+	alertUseCase := usecase.NewAlertUseCase(alertRepo, catalogueRepo)
+	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, accountRepo, clientRepo, alertRepo, catalogueRepo, aiService)
 	dashboardUseCase := usecase.NewDashboardUseCase(transactionRepo, alertRepo)
 
 	// 6. Initialize Driving Adapters (HTTP Handlers)

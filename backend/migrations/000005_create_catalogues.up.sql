@@ -1,6 +1,6 @@
 DO $migration$
 DECLARE
-    v_script_name VARCHAR := '000002_create_accounts';
+    v_script_name VARCHAR := '000005_create_catalogues';
     v_already_executed BOOLEAN;
 BEGIN
     -- Check if already executed
@@ -13,20 +13,22 @@ BEGIN
     END IF;
 
     -- Migration Logic
-    CREATE TABLE IF NOT EXISTS accounts (
+    CREATE TABLE IF NOT EXISTS catalogues (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        client_id UUID NOT NULL REFERENCES clients(id),
-        account_number VARCHAR(30) NOT NULL UNIQUE,
-        account_type VARCHAR(30) NOT NULL,
-        currency VARCHAR(3) DEFAULT 'USD',
-        balance DECIMAL(18,2) DEFAULT 0,
-        status VARCHAR(20) DEFAULT 'active',
+        category VARCHAR(50) NOT NULL,
+        code VARCHAR(50) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE (category, code)
     );
 
+    CREATE INDEX IF NOT EXISTS idx_catalogues_category ON catalogues(category);
+
     -- Log Execution
-    CALL sp_insert_replication_log(v_script_name, 'SUCCESS', 'Accounts table created successfully');
+    CALL sp_insert_replication_log(v_script_name, 'SUCCESS', 'Catalogues table created successfully');
 
 EXCEPTION WHEN OTHERS THEN
     RAISE EXCEPTION 'Migration % failed: %', v_script_name, SQLERRM;

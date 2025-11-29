@@ -23,9 +23,34 @@ func NewTransactionRepository(db *gorm.DB) repository.TransactionRepository {
 }
 
 func (r *TransactionRepository) Save(ctx context.Context, transaction *entity.Transaction) error {
-	transactionModel := mapper.ToTransactionModel(transaction)
-	result := r.db.WithContext(ctx).Create(transactionModel)
-	return result.Error
+	err := r.db.WithContext(ctx).Exec(
+		"CALL sp_create_transaction(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		transaction.AccountID,
+		transaction.Amount,
+		transaction.CurrencyID,
+		transaction.OperationTypeID,
+		transaction.ChannelID,
+		transaction.Merchant,
+		transaction.Country,
+		transaction.City,
+		transaction.StatusID,
+		transaction.RiskScore,
+		transaction.IsFlagged,
+	).Error
+
+	if err != nil {
+		return err
+	}
+
+	var m model.TransactionModel
+	if err := r.db.WithContext(ctx).Where("account_id = ?", transaction.AccountID).Order("created_at desc").First(&m).Error; err != nil {
+		return err
+	}
+
+	transaction.ID = m.ID
+	transaction.CreatedAt = m.CreatedAt
+
+	return nil
 }
 
 func (r *TransactionRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Transaction, error) {
@@ -82,10 +107,14 @@ func (r *TransactionRepository) FindAll(ctx context.Context, filter repository.T
 		query = query.Where("account_id = ?", filter.AccountID)
 	}
 	if filter.OperationType != nil {
-		query = query.Where("operation_type = ?", *filter.OperationType)
+		query = query.Joins("JOIN catalogues AS op_cat ON transactions.operation_type_id = op_cat.id").
+			Joins("JOIN master_data_types AS op_mdt ON op_cat.type_id = op_mdt.id").
+			Where("op_cat.code = ? AND op_mdt.code = 'OPERATION_TYPE'", *filter.OperationType)
 	}
 	if filter.Channel != nil {
-		query = query.Where("channel = ?", *filter.Channel)
+		query = query.Joins("JOIN catalogues AS ch_cat ON transactions.channel_id = ch_cat.id").
+			Joins("JOIN master_data_types AS ch_mdt ON ch_cat.type_id = ch_mdt.id").
+			Where("ch_cat.code = ? AND ch_mdt.code = 'CHANNEL'", *filter.Channel)
 	}
 	if filter.IsFlagged != nil {
 		query = query.Where("is_flagged = ?", *filter.IsFlagged)
@@ -102,7 +131,7 @@ func (r *TransactionRepository) FindAll(ctx context.Context, filter repository.T
 	}
 
 	offset := (filter.Page - 1) * filter.PageSize
-	result := query.Offset(offset).Limit(filter.PageSize).Order("created_at desc").Find(&transactionModels)
+	result := query.Select("transactions.*").Offset(offset).Limit(filter.PageSize).Order("transactions.created_at desc").Find(&transactionModels)
 	if result.Error != nil {
 		return nil, 0, result.Error
 	}
@@ -143,7 +172,19 @@ func (r *TransactionRepository) GetStats(ctx context.Context) (*repository.Trans
 }
 
 func (r *TransactionRepository) Update(ctx context.Context, transaction *entity.Transaction) error {
-	transactionModel := mapper.ToTransactionModel(transaction)
-	result := r.db.WithContext(ctx).Save(transactionModel)
-	return result.Error
+	return r.db.WithContext(ctx).Exec(
+		"CALL sp_update_transaction(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		transaction.ID,
+		transaction.AccountID,
+		transaction.Amount,
+		transaction.CurrencyID,
+		transaction.OperationTypeID,
+		transaction.ChannelID,
+		transaction.Merchant,
+		transaction.Country,
+		transaction.City,
+		transaction.StatusID,
+		transaction.RiskScore,
+		transaction.IsFlagged,
+	).Error
 }

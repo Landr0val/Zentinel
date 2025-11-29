@@ -22,9 +22,30 @@ func NewAccountRepository(db *gorm.DB) repository.AccountRepository {
 }
 
 func (r *AccountRepository) Save(ctx context.Context, account *entity.Account) error {
-	accountModel := mapper.ToAccountModel(account)
-	result := r.db.WithContext(ctx).Create(accountModel)
-	return result.Error
+	err := r.db.WithContext(ctx).Exec(
+		"CALL sp_create_account(?, ?, ?, ?, ?, ?)",
+		account.ClientID,
+		account.AccountNumber,
+		account.AccountTypeID,
+		account.CurrencyID,
+		account.Balance,
+		account.StatusID,
+	).Error
+
+	if err != nil {
+		return err
+	}
+
+	var m model.AccountModel
+	if err := r.db.WithContext(ctx).Where("account_number = ?", account.AccountNumber).First(&m).Error; err != nil {
+		return err
+	}
+
+	account.ID = m.ID
+	account.CreatedAt = m.CreatedAt
+	account.UpdatedAt = m.UpdatedAt
+
+	return nil
 }
 
 func (r *AccountRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Account, error) {
@@ -91,7 +112,14 @@ func (r *AccountRepository) FindAll(ctx context.Context, page int, pageSize int)
 }
 
 func (r *AccountRepository) Update(ctx context.Context, account *entity.Account) error {
-	accountModel := mapper.ToAccountModel(account)
-	result := r.db.WithContext(ctx).Save(accountModel)
-	return result.Error
+	return r.db.WithContext(ctx).Exec(
+		"CALL sp_update_account(?, ?, ?, ?, ?, ?, ?)",
+		account.ID,
+		account.ClientID,
+		account.AccountNumber,
+		account.AccountTypeID,
+		account.CurrencyID,
+		account.Balance,
+		account.StatusID,
+	).Error
 }

@@ -7,19 +7,19 @@ import (
 )
 
 type TransactionModel struct {
-	ID            uuid.UUID `db:"id"`
-	AccountID     uuid.UUID `db:"account_id"`
-	Amount        float64   `db:"amount"`
-	Currency      string    `db:"currency"`
-	OperationType string    `db:"operation_type"`
-	Channel       string    `db:"channel"`
-	Merchant      string    `db:"merchant"`
-	Country       string    `db:"country"`
-	City          string    `db:"city"`
-	Status        string    `db:"status"`
-	RiskScore     int       `db:"risk_score"`
-	IsFlagged     bool      `db:"is_flagged"`
-	CreatedAt     time.Time `db:"created_at"`
+	ID              uuid.UUID `gorm:"column:id;primaryKey"`
+	AccountID       uuid.UUID `gorm:"column:account_id"`
+	Amount          float64   `gorm:"column:amount"`
+	CurrencyID      uuid.UUID `gorm:"column:currency_id"`
+	OperationTypeID uuid.UUID `gorm:"column:operation_type_id"`
+	ChannelID       uuid.UUID `gorm:"column:channel_id"`
+	Merchant        string    `gorm:"column:merchant"`
+	Country         string    `gorm:"column:country"`
+	City            string    `gorm:"column:city"`
+	StatusID        uuid.UUID `gorm:"column:status_id"`
+	RiskScore       int       `gorm:"column:risk_score"`
+	IsFlagged       bool      `gorm:"column:is_flagged"`
+	CreatedAt       time.Time `gorm:"column:created_at"`
 }
 
 func (TransactionModel) TableName() string {

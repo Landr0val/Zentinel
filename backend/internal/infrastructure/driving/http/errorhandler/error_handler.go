@@ -49,6 +49,8 @@ func HandleDomainError(c *gin.Context, err error) {
 		c.JSON(http.StatusNotFound, response.NewErrorResponse("NOT_FOUND", "Resource not found", err.Error()))
 	case errors.Is(err, domain.ErrConflict):
 		c.JSON(http.StatusConflict, response.NewErrorResponse("CONFLICT", "Resource conflict", err.Error()))
+	case errors.Is(err, domain.ErrDocumentAlreadyExists):
+		c.JSON(http.StatusConflict, response.NewErrorResponse("DOCUMENT_EXISTS", "Document already exists", err.Error()))
 	case errors.Is(err, domain.ErrInvalidInput):
 		c.JSON(http.StatusBadRequest, response.NewErrorResponse("INVALID_INPUT", "Invalid input", err.Error()))
 	case errors.Is(err, domain.ErrUnauthorized):

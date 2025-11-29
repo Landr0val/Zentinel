@@ -9,7 +9,6 @@ import (
 	"zentinel/internal/domain/enums"
 	"zentinel/internal/domain/repository"
 	domainService "zentinel/internal/domain/service"
-	"zentinel/internal/domain/valueobject"
 
 	"github.com/google/uuid"
 )
@@ -21,6 +20,7 @@ type TransactionUseCase struct {
 	accountRepo     repository.AccountRepository
 	clientRepo      repository.ClientRepository
 	alertRepo       repository.AlertRepository
+	catalogueRepo   repository.CatalogueRepository
 	aiService       domainService.AIService
 }
 
@@ -29,6 +29,7 @@ func NewTransactionUseCase(
 	accountRepo repository.AccountRepository,
 	clientRepo repository.ClientRepository,
 	alertRepo repository.AlertRepository,
+	catalogueRepo repository.CatalogueRepository,
 	aiService domainService.AIService,
 ) *TransactionUseCase {
 	return &TransactionUseCase{
@@ -36,6 +37,7 @@ func NewTransactionUseCase(
 		accountRepo:     accountRepo,
 		clientRepo:      clientRepo,
 		alertRepo:       alertRepo,
+		catalogueRepo:   catalogueRepo,
 		aiService:       aiService,
 	}
 }
@@ -51,22 +53,38 @@ func (s *TransactionUseCase) CreateTransaction(ctx context.Context, req dto.Crea
 		return nil, err
 	}
 
-	amount, err := valueobject.NewMoney(req.Amount, req.Currency)
+	opTypeCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "OPERATION_TYPE", string(req.OperationType))
+	if err != nil {
+		return nil, err
+	}
+
+	channelCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "CHANNEL", string(req.Channel))
+	if err != nil {
+		return nil, err
+	}
+
+	currencyCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "CURRENCY", req.Currency)
+	if err != nil {
+		return nil, err
+	}
+
+	statusPendingCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "TRANSACTION_STATUS", "pending")
 	if err != nil {
 		return nil, err
 	}
 
 	transaction := &entity.Transaction{
-		ID:            uuid.New(),
-		AccountID:     req.AccountID,
-		Amount:        amount,
-		OperationType: req.OperationType,
-		Channel:       req.Channel,
-		Merchant:      req.Merchant,
-		Country:       req.Country,
-		City:          req.City,
-		Status:        enums.TransactionStatusPending,
-		CreatedAt:     time.Now(),
+		ID:              uuid.New(),
+		AccountID:       req.AccountID,
+		Amount:          req.Amount,
+		CurrencyID:      currencyCat.ID,
+		OperationTypeID: opTypeCat.ID,
+		ChannelID:       channelCat.ID,
+		Merchant:        req.Merchant,
+		Country:         req.Country,
+		City:            req.City,
+		StatusID:        statusPendingCat.ID,
+		CreatedAt:       time.Now(),
 	}
 
 	since := time.Now().AddDate(0, 0, -30)
@@ -84,21 +102,24 @@ func (s *TransactionUseCase) CreateTransaction(ctx context.Context, req dto.Crea
 	transaction.IsFlagged = analysis.ShouldBlock || analysis.RiskScore > 80
 
 	if analysis.ShouldBlock {
-		transaction.Status = enums.TransactionStatusFailed
-	} else {
-		transaction.Status = enums.TransactionStatusCompleted
-
-		var newBalance valueobject.Money
-		if req.OperationType == enums.OperationTypeDeposit {
-			newBalance, err = account.Balance.Add(amount)
-		} else {
-			newBalance, err = account.Balance.Subtract(amount)
-		}
-
+		statusFailedCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "TRANSACTION_STATUS", "failed")
 		if err != nil {
 			return nil, err
 		}
-		account.Balance = newBalance
+		transaction.StatusID = statusFailedCat.ID
+	} else {
+		statusCompletedCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "TRANSACTION_STATUS", "completed")
+		if err != nil {
+			return nil, err
+		}
+		transaction.StatusID = statusCompletedCat.ID
+
+		if req.OperationType == enums.OperationTypeDeposit {
+			account.Balance += req.Amount
+		} else {
+			account.Balance -= req.Amount
+		}
+
 		if err := s.accountRepo.Update(ctx, account); err != nil {
 			return nil, err
 		}
@@ -109,15 +130,30 @@ func (s *TransactionUseCase) CreateTransaction(ctx context.Context, req dto.Crea
 	}
 
 	if transaction.IsFlagged {
+		alertTypeCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "ALERT_TYPE", "suspicious_activity")
+		if err != nil {
+			return nil, err
+		}
+
+		severityCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "ALERT_SEVERITY", string(analysis.RiskLevel))
+		if err != nil {
+			return nil, err
+		}
+
+		alertStatusCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "ALERT_STATUS", "pending")
+		if err != nil {
+			return nil, err
+		}
+
 		alert := &entity.Alert{
 			ID:            uuid.New(),
 			TransactionID: &transaction.ID,
 			ClientID:      client.ID,
-			AlertType:     enums.AlertTypeFraudSuspicion,
-			Severity:      analysis.RiskLevel,
+			AlertTypeID:   alertTypeCat.ID,
+			SeverityID:    severityCat.ID,
 			Description:   "High risk transaction detected",
 			AIExplanation: analysis.Explanation,
-			Status:        enums.AlertStatusPending,
+			StatusID:      alertStatusCat.ID,
 			CreatedAt:     time.Now(),
 		}
 		if err := s.alertRepo.Save(ctx, alert); err != nil {
@@ -125,7 +161,7 @@ func (s *TransactionUseCase) CreateTransaction(ctx context.Context, req dto.Crea
 		}
 	}
 
-	return s.mapToResponse(transaction), nil
+	return s.mapToResponse(ctx, transaction)
 }
 
 func (s *TransactionUseCase) GetTransaction(ctx context.Context, id uuid.UUID) (*dto.TransactionResponse, error) {
@@ -133,7 +169,7 @@ func (s *TransactionUseCase) GetTransaction(ctx context.Context, id uuid.UUID) (
 	if err != nil {
 		return nil, err
 	}
-	return s.mapToResponse(transaction), nil
+	return s.mapToResponse(ctx, transaction)
 }
 
 func (s *TransactionUseCase) ListTransactions(ctx context.Context, filter repository.TransactionFilter) ([]*dto.TransactionResponse, int64, error) {
@@ -144,7 +180,11 @@ func (s *TransactionUseCase) ListTransactions(ctx context.Context, filter reposi
 
 	responses := make([]*dto.TransactionResponse, len(transactions))
 	for i, tx := range transactions {
-		responses[i] = s.mapToResponse(tx)
+		resp, err := s.mapToResponse(ctx, tx)
+		if err != nil {
+			return nil, 0, err
+		}
+		responses[i] = resp
 	}
 
 	return responses, total, nil
@@ -184,23 +224,63 @@ func (s *TransactionUseCase) AnalyzeTransaction(ctx context.Context, id uuid.UUI
 		return nil, err
 	}
 
-	return s.mapToResponse(transaction), nil
+	return s.mapToResponse(ctx, transaction)
 }
 
-func (s *TransactionUseCase) mapToResponse(t *entity.Transaction) *dto.TransactionResponse {
+func (s *TransactionUseCase) mapToResponse(ctx context.Context, t *entity.Transaction) (*dto.TransactionResponse, error) {
+	opTypeCat, err := s.catalogueRepo.GetByID(ctx, t.OperationTypeID)
+	if err != nil {
+		return nil, err
+	}
+
+	channelCat, err := s.catalogueRepo.GetByID(ctx, t.ChannelID)
+	if err != nil {
+		return nil, err
+	}
+
+	currencyCat, err := s.catalogueRepo.GetByID(ctx, t.CurrencyID)
+	if err != nil {
+		return nil, err
+	}
+
+	statusCat, err := s.catalogueRepo.GetByID(ctx, t.StatusID)
+	if err != nil {
+		return nil, err
+	}
+
+	var opTypeCode enums.OperationType
+	if opTypeCat != nil {
+		opTypeCode = enums.OperationType(opTypeCat.Code)
+	}
+
+	var channelCode enums.Channel
+	if channelCat != nil {
+		channelCode = enums.Channel(channelCat.Code)
+	}
+
+	var currencyCode string
+	if currencyCat != nil {
+		currencyCode = currencyCat.Code
+	}
+
+	var statusCode enums.TransactionStatus
+	if statusCat != nil {
+		statusCode = enums.TransactionStatus(statusCat.Code)
+	}
+
 	return &dto.TransactionResponse{
 		ID:            t.ID,
 		AccountID:     t.AccountID,
-		Amount:        t.Amount.Amount(),
-		Currency:      t.Amount.Currency(),
-		OperationType: t.OperationType,
-		Channel:       t.Channel,
+		Amount:        t.Amount,
+		Currency:      currencyCode,
+		OperationType: opTypeCode,
+		Channel:       channelCode,
 		Merchant:      t.Merchant,
 		Country:       t.Country,
 		City:          t.City,
-		Status:        t.Status,
+		Status:        statusCode,
 		RiskScore:     t.RiskScore,
 		IsFlagged:     t.IsFlagged,
 		CreatedAt:     t.CreatedAt,
-	}
+	}, nil
 }

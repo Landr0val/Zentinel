@@ -23,9 +23,30 @@ func NewAlertRepository(db *gorm.DB) repository.AlertRepository {
 }
 
 func (r *AlertRepository) Save(ctx context.Context, alert *entity.Alert) error {
-	alertModel := mapper.ToAlertModel(alert)
-	result := r.db.WithContext(ctx).Create(alertModel)
-	return result.Error
+	err := r.db.WithContext(ctx).Exec(
+		"CALL sp_create_alert(?, ?, ?, ?, ?, ?, ?)",
+		alert.TransactionID,
+		alert.ClientID,
+		alert.AlertTypeID,
+		alert.SeverityID,
+		alert.Description,
+		alert.AIExplanation,
+		alert.StatusID,
+	).Error
+
+	if err != nil {
+		return err
+	}
+
+	var m model.AlertModel
+	if err := r.db.WithContext(ctx).Where("client_id = ?", alert.ClientID).Order("created_at desc").First(&m).Error; err != nil {
+		return err
+	}
+
+	alert.ID = m.ID
+	alert.CreatedAt = m.CreatedAt
+
+	return nil
 }
 
 func (r *AlertRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Alert, error) {
@@ -86,9 +107,12 @@ func (r *AlertRepository) CountByStatus(ctx context.Context) (map[enums.AlertSta
 	}
 	var results []Result
 
-	if err := r.db.WithContext(ctx).Model(&model.AlertModel{}).
-		Select("status, count(*) as count").
-		Group("status").
+	if err := r.db.WithContext(ctx).Table("alerts").
+		Select("catalogues.code as status, count(*) as count").
+		Joins("JOIN catalogues ON alerts.status_id = catalogues.id").
+		Joins("JOIN master_data_types mdt ON catalogues.type_id = mdt.id").
+		Where("mdt.code = ?", "ALERT_STATUS").
+		Group("catalogues.code").
 		Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -102,13 +126,27 @@ func (r *AlertRepository) CountByStatus(ctx context.Context) (map[enums.AlertSta
 }
 
 func (r *AlertRepository) Update(ctx context.Context, alert *entity.Alert) error {
-	alertModel := mapper.ToAlertModel(alert)
-	result := r.db.WithContext(ctx).Save(alertModel)
-	return result.Error
+	return r.db.WithContext(ctx).Exec(
+		"CALL sp_update_alert(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		alert.ID,
+		alert.TransactionID,
+		alert.ClientID,
+		alert.AlertTypeID,
+		alert.SeverityID,
+		alert.Description,
+		alert.AIExplanation,
+		alert.StatusID,
+		alert.ReviewedBy,
+		alert.ReviewedAt,
+	).Error
 }
 
 func (r *AlertRepository) CountActive(ctx context.Context) (int64, error) {
 	var count int64
-	err := r.db.WithContext(ctx).Model(&model.AlertModel{}).Where("status != ?", "resolved").Count(&count).Error
+	err := r.db.WithContext(ctx).Table("alerts").
+		Joins("JOIN catalogues ON alerts.status_id = catalogues.id").
+		Joins("JOIN master_data_types mdt ON catalogues.type_id = mdt.id").
+		Where("catalogues.code != ? AND mdt.code = ?", "resolved", "ALERT_STATUS").
+		Count(&count).Error
 	return count, err
 }

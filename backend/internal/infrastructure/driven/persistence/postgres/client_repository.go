@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"strings"
 	"zentinel/internal/domain"
 	"zentinel/internal/domain/entity"
 	"zentinel/internal/domain/repository"
@@ -22,9 +23,33 @@ func NewClientRepository(db *gorm.DB) repository.ClientRepository {
 }
 
 func (r *ClientRepository) Save(ctx context.Context, client *entity.Client) error {
-	clientModel := mapper.ToClientModel(client)
-	result := r.db.WithContext(ctx).Create(clientModel)
-	return result.Error
+	err := r.db.WithContext(ctx).Exec(
+		"CALL sp_create_client(?, ?, ?, ?, ?, ?)",
+		client.DocumentTypeID,
+		client.DocumentNumber,
+		client.FullName,
+		client.Email,
+		client.Phone,
+		client.RiskProfileID,
+	).Error
+
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			return domain.ErrDocumentAlreadyExists
+		}
+		return err
+	}
+
+	var m model.ClientModel
+	if err := r.db.WithContext(ctx).Where("document_number = ?", client.DocumentNumber).First(&m).Error; err != nil {
+		return err
+	}
+
+	client.ID = m.ID
+	client.CreatedAt = m.CreatedAt
+	client.UpdatedAt = m.UpdatedAt
+
+	return nil
 }
 
 func (r *ClientRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Client, error) {
@@ -64,7 +89,14 @@ func (r *ClientRepository) FindAll(ctx context.Context, page int, pageSize int) 
 }
 
 func (r *ClientRepository) Update(ctx context.Context, client *entity.Client) error {
-	clientModel := mapper.ToClientModel(client)
-	result := r.db.WithContext(ctx).Save(clientModel)
-	return result.Error
+	return r.db.WithContext(ctx).Exec(
+		"CALL sp_update_client(?, ?, ?, ?, ?, ?, ?)",
+		client.ID,
+		client.DocumentTypeID,
+		client.DocumentNumber,
+		client.FullName,
+		client.Email,
+		client.Phone,
+		client.RiskProfileID,
+	).Error
 }

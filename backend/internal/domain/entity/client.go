@@ -2,19 +2,18 @@ package entity
 
 import (
 	"time"
-	"zentinel/internal/domain/enums"
 
 	"github.com/google/uuid"
 )
 
 type Client struct {
 	ID             uuid.UUID
-	DocumentType   string
+	DocumentTypeID uuid.UUID
 	DocumentNumber string
 	FullName       string
 	Email          string
 	Phone          string
-	RiskProfile    enums.RiskProfile
+	RiskProfileID  uuid.UUID
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

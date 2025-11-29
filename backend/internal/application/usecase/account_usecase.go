@@ -2,13 +2,15 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 	"zentinel/internal/application/dto"
 	"zentinel/internal/application/port"
+	"zentinel/internal/domain"
 	"zentinel/internal/domain/entity"
 	"zentinel/internal/domain/enums"
 	"zentinel/internal/domain/repository"
-	"zentinel/internal/domain/valueobject"
 
 	"github.com/google/uuid"
 )
@@ -16,14 +18,16 @@ import (
 var _ port.AccountUseCase = (*AccountUseCase)(nil)
 
 type AccountUseCase struct {
-	accountRepo repository.AccountRepository
-	clientRepo  repository.ClientRepository
+	accountRepo   repository.AccountRepository
+	clientRepo    repository.ClientRepository
+	catalogueRepo repository.CatalogueRepository
 }
 
-func NewAccountUseCase(accountRepo repository.AccountRepository, clientRepo repository.ClientRepository) *AccountUseCase {
+func NewAccountUseCase(accountRepo repository.AccountRepository, clientRepo repository.ClientRepository, catalogueRepo repository.CatalogueRepository) *AccountUseCase {
 	return &AccountUseCase{
-		accountRepo: accountRepo,
-		clientRepo:  clientRepo,
+		accountRepo:   accountRepo,
+		clientRepo:    clientRepo,
+		catalogueRepo: catalogueRepo,
 	}
 }
 
@@ -35,8 +39,27 @@ func (s *AccountUseCase) CreateAccount(ctx context.Context, req dto.CreateAccoun
 		return nil, err
 	}
 
-	initialBalance, err := valueobject.NewMoney(0, req.Currency)
+	accountTypeCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "ACCOUNT_TYPE", string(req.AccountType))
 	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("%w: invalid account type '%s'", domain.ErrInvalidInput, req.AccountType)
+		}
+		return nil, err
+	}
+
+	currencyCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "CURRENCY", req.Currency)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("%w: invalid currency '%s'", domain.ErrInvalidInput, req.Currency)
+		}
+		return nil, err
+	}
+
+	statusCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "ACCOUNT_STATUS", string(enums.AccountStatusActive))
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, fmt.Errorf("%w: account status 'active' configuration missing", domain.ErrInternal)
+		}
 		return nil, err
 	}
 
@@ -44,9 +67,10 @@ func (s *AccountUseCase) CreateAccount(ctx context.Context, req dto.CreateAccoun
 		ID:            uuid.New(),
 		ClientID:      req.ClientID,
 		AccountNumber: req.AccountNumber,
-		AccountType:   req.AccountType,
-		Balance:       initialBalance,
-		Status:        enums.AccountStatusActive,
+		AccountTypeID: accountTypeCat.ID,
+		CurrencyID:    currencyCat.ID,
+		Balance:       0,
+		StatusID:      statusCat.ID,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
@@ -55,7 +79,7 @@ func (s *AccountUseCase) CreateAccount(ctx context.Context, req dto.CreateAccoun
 		return nil, err
 	}
 
-	return s.mapToResponse(account), nil
+	return s.mapToResponse(ctx, account)
 }
 
 func (s *AccountUseCase) GetAccount(ctx context.Context, id uuid.UUID) (*dto.AccountResponse, error) {
@@ -63,7 +87,7 @@ func (s *AccountUseCase) GetAccount(ctx context.Context, id uuid.UUID) (*dto.Acc
 	if err != nil {
 		return nil, err
 	}
-	return s.mapToResponse(account), nil
+	return s.mapToResponse(ctx, account)
 }
 
 func (s *AccountUseCase) UpdateAccount(ctx context.Context, id uuid.UUID, req dto.UpdateAccountRequest) (*dto.AccountResponse, error) {
@@ -73,7 +97,14 @@ func (s *AccountUseCase) UpdateAccount(ctx context.Context, id uuid.UUID, req dt
 	}
 
 	if req.Status != "" {
-		account.Status = req.Status
+		statusCat, err := s.catalogueRepo.GetByCategoryAndCode(ctx, "ACCOUNT_STATUS", string(req.Status))
+		if err != nil {
+			if errors.Is(err, domain.ErrNotFound) {
+				return nil, fmt.Errorf("%w: invalid account status '%s'", domain.ErrInvalidInput, req.Status)
+			}
+			return nil, err
+		}
+		account.StatusID = statusCat.ID
 	}
 	account.UpdatedAt = time.Now()
 
@@ -81,7 +112,7 @@ func (s *AccountUseCase) UpdateAccount(ctx context.Context, id uuid.UUID, req dt
 		return nil, err
 	}
 
-	return s.mapToResponse(account), nil
+	return s.mapToResponse(ctx, account)
 }
 
 func (s *AccountUseCase) ListAccounts(ctx context.Context, page, pageSize int) ([]*dto.AccountResponse, int64, error) {
@@ -92,22 +123,56 @@ func (s *AccountUseCase) ListAccounts(ctx context.Context, page, pageSize int) (
 
 	responses := make([]*dto.AccountResponse, len(accounts))
 	for i, account := range accounts {
-		responses[i] = s.mapToResponse(account)
+		resp, err := s.mapToResponse(ctx, account)
+		if err != nil {
+			return nil, 0, err
+		}
+		responses[i] = resp
 	}
 
 	return responses, total, nil
 }
 
-func (s *AccountUseCase) mapToResponse(account *entity.Account) *dto.AccountResponse {
+func (s *AccountUseCase) mapToResponse(ctx context.Context, account *entity.Account) (*dto.AccountResponse, error) {
+	accountTypeCat, err := s.catalogueRepo.GetByID(ctx, account.AccountTypeID)
+	if err != nil {
+		return nil, err
+	}
+
+	currencyCat, err := s.catalogueRepo.GetByID(ctx, account.CurrencyID)
+	if err != nil {
+		return nil, err
+	}
+
+	statusCat, err := s.catalogueRepo.GetByID(ctx, account.StatusID)
+	if err != nil {
+		return nil, err
+	}
+
+	var accountTypeCode enums.AccountType
+	if accountTypeCat != nil {
+		accountTypeCode = enums.AccountType(accountTypeCat.Code)
+	}
+
+	var currencyCode string
+	if currencyCat != nil {
+		currencyCode = currencyCat.Code
+	}
+
+	var statusCode enums.AccountStatus
+	if statusCat != nil {
+		statusCode = enums.AccountStatus(statusCat.Code)
+	}
+
 	return &dto.AccountResponse{
 		ID:            account.ID,
 		ClientID:      account.ClientID,
 		AccountNumber: account.AccountNumber,
-		AccountType:   account.AccountType,
-		Currency:      account.Balance.Currency(),
-		Balance:       account.Balance.Amount(),
-		Status:        account.Status,
+		AccountType:   accountTypeCode,
+		Currency:      currencyCode,
+		Balance:       account.Balance,
+		Status:        statusCode,
 		CreatedAt:     account.CreatedAt,
 		UpdatedAt:     account.UpdatedAt,
-	}
+	}, nil
 }

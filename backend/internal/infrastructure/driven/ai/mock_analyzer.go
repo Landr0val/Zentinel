@@ -9,6 +9,8 @@ import (
 	"zentinel/internal/domain/entity"
 	"zentinel/internal/domain/enums"
 	"zentinel/internal/domain/service"
+
+	"github.com/google/uuid"
 )
 
 type MockAnalyzer struct{}
@@ -23,7 +25,7 @@ func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *enti
 
 	// 1. Monto inusual: Monto > 3x promedio histórico
 	avgAmount := calculateAverageAmount(history)
-	if avgAmount > 0 && transaction.Amount.Amount() > 3*avgAmount {
+	if avgAmount > 0 && transaction.Amount > 3*avgAmount {
 		score += 35
 		factors = append(factors, "Monto inusual (supera 3x el promedio)")
 	}
@@ -43,7 +45,7 @@ func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *enti
 	}
 
 	// 4. Canal inusual: Canal poco usado por el cliente
-	if !isChannelCommon(history, transaction.Channel) {
+	if !isChannelCommon(history, transaction.ChannelID) {
 		score += 15
 		factors = append(factors, "Canal inusual")
 	}
@@ -56,7 +58,7 @@ func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *enti
 	}
 
 	// 6. Monto redondo sospechoso: Montos exactos grandes
-	if transaction.Amount.Amount() >= 1000 && math.Mod(transaction.Amount.Amount(), 100) == 0 {
+	if transaction.Amount >= 1000 && math.Mod(transaction.Amount, 100) == 0 {
 		score += 10
 		factors = append(factors, "Monto redondo sospechoso")
 	}
@@ -104,7 +106,7 @@ func calculateAverageAmount(history []*entity.Transaction) float64 {
 	}
 	var sum float64
 	for _, tx := range history {
-		sum += tx.Amount.Amount()
+		sum += tx.Amount
 	}
 	return sum / float64(len(history))
 }
@@ -139,13 +141,13 @@ func countRecentTransactions(history []*entity.Transaction, current time.Time, w
 	return count
 }
 
-func isChannelCommon(history []*entity.Transaction, channel enums.Channel) bool {
+func isChannelCommon(history []*entity.Transaction, channelID uuid.UUID) bool {
 	if len(history) == 0 {
 		return true
 	}
 	count := 0
 	for _, tx := range history {
-		if tx.Channel == channel {
+		if tx.ChannelID == channelID {
 			count++
 		}
 	}

@@ -2,7 +2,6 @@ package entity
 
 import (
 	"time"
-	"zentinel/internal/domain/enums"
 
 	"github.com/google/uuid"
 )
@@ -11,11 +10,11 @@ type Alert struct {
 	ID            uuid.UUID
 	TransactionID *uuid.UUID
 	ClientID      uuid.UUID
-	AlertType     enums.AlertType
-	Severity      enums.AlertSeverity
+	AlertTypeID   uuid.UUID
+	SeverityID    uuid.UUID
 	Description   string
 	AIExplanation string
-	Status        enums.AlertStatus
+	StatusID      uuid.UUID
 	ReviewedBy    string
 	ReviewedAt    *time.Time
 	CreatedAt     time.Time
