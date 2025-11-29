@@ -10,5 +10,6 @@ import (
 type ClientRepository interface {
 	Save(ctx context.Context, client *entity.Client) error
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Client, error)
+	FindAll(ctx context.Context, page int, pageSize int) ([]*entity.Client, int64, error)
 	Update(ctx context.Context, client *entity.Client) error
 }
