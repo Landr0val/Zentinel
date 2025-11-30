@@ -44,7 +44,7 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   dashboard: {
-    getStats: () => fetcher<ApiResponse<DashboardStats>>("/dashboard/stats"),
+    getStats: () => fetcher<ApiResponse<DashboardStats>>("/api/v1/dashboard/stats"),
   },
   clients: {
     list: (params?: Record<string, string | number | boolean | null | undefined>) => {
