@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -9,6 +9,7 @@ import {
   Activity,
   AlertTriangle,
   ShieldCheck,
+  LogOut,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -22,6 +23,12 @@ const navigation = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
 
   return (
     <aside className="flex h-full w-64 flex-col bg-card border-r border-border fixed left-0 top-0 bottom-0 z-50 transition-colors duration-300">
@@ -69,6 +76,13 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-6 border-t border-border">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200 ease-out mb-4"
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          Cerrar Sesión
+        </button>
         <div className="flex items-center justify-center">
           <p className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-widest">
             v1.0.0

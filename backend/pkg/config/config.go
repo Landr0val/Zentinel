@@ -13,6 +13,7 @@ type Config struct {
 	DBName     string `mapstructure:"DB_NAME"`
 	DBSSLMode  string `mapstructure:"DB_SSLMODE"`
 	LogLevel   string `mapstructure:"LOG_LEVEL"`
+	JWTSecret  string `mapstructure:"JWT_SECRET"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -26,6 +27,7 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("DB_NAME", "zentinel")
 	viper.SetDefault("DB_SSLMODE", "disable")
 	viper.SetDefault("LOG_LEVEL", "info")
+	viper.SetDefault("JWT_SECRET", "supersecretkey")
 
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {

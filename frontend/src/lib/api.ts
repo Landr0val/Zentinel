@@ -13,8 +13,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/a
 
 async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
   const headers = {
     "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options?.headers,
   };
 
@@ -24,6 +28,11 @@ async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
+    if ((response.status === 401 || response.status === 403) && typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
       errorData.error?.message || `API Error: ${response.status} ${response.statusText}`

@@ -155,3 +155,29 @@ func ToAlertModel(e *entity.Alert) *model.AlertModel {
 		CreatedAt:     e.CreatedAt,
 	}
 }
+
+func ToUserEntity(m *model.UserModel) *entity.User {
+	if m == nil {
+		return nil
+	}
+	return &entity.User{
+		ID:        m.ID,
+		Email:     m.Email,
+		Password:  m.Password,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
+	}
+}
+
+func ToUserModel(e *entity.User) *model.UserModel {
+	if e == nil {
+		return nil
+	}
+	return &model.UserModel{
+		ID:        e.ID,
+		Email:     e.Email,
+		Password:  e.Password,
+		CreatedAt: e.CreatedAt,
+		UpdatedAt: e.UpdatedAt,
+	}
+}

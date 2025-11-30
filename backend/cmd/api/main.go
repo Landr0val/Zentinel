@@ -42,6 +42,7 @@ func main() {
 	transactionRepo := postgres.NewTransactionRepository(db)
 	alertRepo := postgres.NewAlertRepository(db)
 	catalogueRepo := postgres.NewCatalogueRepository(db)
+	userRepo := postgres.NewUserRepository(db)
 
 	aiService := ai.NewMockAnalyzer()
 
@@ -57,11 +58,13 @@ func main() {
 
 	clientUseCase := usecase.NewClientUseCase(clientRepo, accountRepo, catalogueRepo)
 	accountUseCase := usecase.NewAccountUseCase(accountRepo, clientRepo, catalogueRepo)
+	authUseCase := usecase.NewAuthUseCase(userRepo, cfg.JWTSecret)
 	alertUseCase := usecase.NewAlertUseCase(alertRepo, catalogueRepo, blockchainNotifier)
 	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, accountRepo, clientRepo, alertRepo, catalogueRepo, aiService, blockchainNotifier)
 	dashboardUseCase := usecase.NewDashboardUseCase(transactionRepo, alertRepo)
 
 	healthHandler := handler.NewHealthHandler(db)
+	authHandler := handler.NewAuthHandler(authUseCase)
 	clientHandler := handler.NewClientHandler(clientUseCase)
 	accountHandler := handler.NewAccountHandler(accountUseCase)
 	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
@@ -69,7 +72,9 @@ func main() {
 	dashboardHandler := handler.NewDashboardHandler(dashboardUseCase)
 
 	router := zhttp.SetupRouter(
+		cfg.JWTSecret,
 		healthHandler,
+		authHandler,
 		clientHandler,
 		accountHandler,
 		transactionHandler,

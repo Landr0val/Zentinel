@@ -8,7 +8,9 @@ import (
 )
 
 func SetupRouter(
+	jwtSecret string,
 	healthHandler *handler.HealthHandler,
+	authHandler *handler.AuthHandler,
 	clientHandler *handler.ClientHandler,
 	accountHandler *handler.AccountHandler,
 	transactionHandler *handler.TransactionHandler,
@@ -22,6 +24,8 @@ func SetupRouter(
 	r.Use(middleware.RecoveryMiddleware())
 	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.MetricsMiddleware())
+	r.Use(middleware.SecurityMiddleware())
+	r.Use(middleware.RateLimitMiddleware(10, 20))
 
 	// Health Check
 	r.GET("/health", healthHandler.Check)
@@ -31,8 +35,16 @@ func SetupRouter(
 		c.JSON(200, gin.H{"message": "metrics endpoint"})
 	})
 
+	// Auth
+	auth := r.Group("/auth")
+	{
+		// auth.POST("/register", authHandler.Register)
+		auth.POST("/login", authHandler.Login)
+	}
+
 	// API v1
 	v1 := r.Group("/api/v1")
+	v1.Use(middleware.JWTAuthMiddleware(jwtSecret))
 	{
 		// Clients
 		clients := v1.Group("/clients")
