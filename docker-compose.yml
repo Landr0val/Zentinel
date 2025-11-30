@@ -1,11 +1,18 @@
 version: "3.8"
 
+networks:
+  dokploy-network:
+    external: true
+
 services:
   migrate:
     image: migrate/migrate
     volumes:
       - ./backend/migrations:/migrations
     command: -path=/migrations/ -database postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE} up
+    networks:
+      - default
+      - dokploy-network
 
   backend:
     build:
@@ -26,6 +33,9 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    networks:
+      - default
+      - dokploy-network
 
   frontend:
     build:
@@ -38,6 +48,6 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-
-volumes:
-  postgres_data:
+    networks:
+      - default
+      - dokploy-network
