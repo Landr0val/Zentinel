@@ -2,7 +2,7 @@
 
 ## Problema Elegido: Dashboard de Monitoreo de Transacciones y Alertas de Fraude
 
-He elegido desarrollar un sistema de detección de fraude bancario porque representa un desafío técnico completo y realista. La detección de fraude es un problema crítico en la banca moderna que combina el procesamiento de datos transaccionales con la toma de decisiones inteligente.
+Elegí desarrollar un sistema de detección de fraude bancario porque representa un desafío técnico completo y realista. La detección de fraude es un problema crítico en la banca moderna que combina el procesamiento de datos transaccionales con la toma de decisiones inteligente.
 
 Esta elección permite demostrar:
 *   **Relevancia del dominio:** Es un problema real que requiere precisión y velocidad.
@@ -34,18 +34,37 @@ Una vez levantado:
 *   **Backend (API):** Disponible en [http://localhost:8080](http://localhost:8080)
 *   **Base de Datos:** Puerto `5432`
 
-## Funcionalidad de IA (El Cerebro de Zentinel)
+## Testing
 
-Aquí es donde la cosa se pone interesante. Zentinel no es solo una hoja de cálculo glorificada; tiene un "cerebro" analítico integrado.
+El proyecto cuenta con una suite de tests para asegurar la calidad del código. Los tests se encuentran organizados en la carpeta `backend/tests` y están separados por capa:
 
-El sistema cuenta con un módulo de detección de fraude que analiza cada transacción en tiempo real. Imagínalo como un detective privado digital que revisa:
-*   Si estás gastando mucho más de lo normal.
-*   Si apareciste mágicamente en otro país.
-*   Si estás haciendo demasiadas transferencias en la madrugada.
+*   **Casos de Uso (`tests/usecase`):** Pruebas de la lógica de negocio principal.
+*   **Infraestructura (`tests/infrastructure`):** Pruebas de adaptadores, handlers HTTP y servicios externos simulados (como la IA).
 
-Basándose en esto, la IA calcula un **Score de Riesgo (0-100)** y nos da un veredicto claro (desde "Todo bien" hasta "¡Bloqueen esto ya!"), junto con una explicación en lenguaje natural de por qué sospecha. Lo mejor es que está diseñado con Arquitectura Hexagonal, así que el "cerebro" es una pieza intercambiable que no ensucia la lógica principal del banco.
+Para ejecutar todos los tests del backend:
 
-> **Aclaración:** Por falta de tiempo, la funcionalidad de IA fué simulada para este MVP. El sistema utiliza un conjunto de reglas lógicas para emular el comportamiento del modelo de detección de fraude.
+1.  Navega a la carpeta del backend:
+    ```bash
+    cd backend
+    ```
+2.  Ejecuta el comando de Go:
+    ```bash
+    go test ./...
+    ```
+
+## Funcionalidad de IA
+
+Zentinel analiza cada transacción en tiempo real buscando patrones sospechosos (gastos inusuales, cambios de ubicación, horarios extraños).
+
+Calcula un **Score de Riesgo (0-100)** y decide si bloquear la operación, explicando el motivo en lenguaje natural.
+
+> **Aclaración:** Para este MVP, la IA está simulada con reglas lógicas, pero la arquitectura permite conectar un modelo real fácilmente.
+
+## Blockchain (Audit Log)
+
+La idea original era guardar un hash de las alertas críticas en Blockchain para que nadie pudiera alterar la evidencia.
+
+> **Nota:** El contrato inteligente (`AuditLog.sol`) está listo, pero por falta de tiempo para el MVP, la conexión real quedó pendiente. Ahora mismo se usa un **Mock** que simula todo para que el sistema funcione fluido.
 
 ## Arquitectura del Proyecto
 
@@ -88,6 +107,7 @@ graph TD
         subgraph "Driven Adapters (Salida)"
             PGAdapter[Postgres Adapter]:::driven
             AIAdapter[AI Mock Adapter]:::driven
+            BCAdapter[Blockchain Mock Adapter]:::driven
         end
     end
 
@@ -116,6 +136,7 @@ graph TD
     TxUC -->|Llama| AIAdapter
     TxUC -->|Persiste| PGAdapter
     AlertUC -->|Lee/Escribe| PGAdapter
+    AlertUC -->|Registra Hash| BCAdapter
     DashUC -->|Lee Métricas| PGAdapter
 
     PGAdapter -->|SQL| DB
@@ -123,4 +144,6 @@ graph TD
     %% Notas
     note_ai["Simulación de IA<br/>(Reglas Heurísticas)"]
     AIAdapter --- note_ai
+    note_bc["Simulación Blockchain<br/>(Mock)"]
+    BCAdapter --- note_bc
 ```

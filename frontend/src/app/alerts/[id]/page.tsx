@@ -11,7 +11,6 @@ import {
   Shield,
   User,
   CreditCard,
-  Send,
   MoreHorizontal,
   Loader2,
   AlertCircle,
@@ -210,28 +209,6 @@ export default function AlertDetailPage() {
                   </div>
                 </div>
               ))}
-            </div>
-
-            {/* Add Note Input */}
-            <div className="flex gap-4 pt-8 mt-2 relative z-10">
-              <div className="h-10 w-10 rounded-full bg-foreground flex items-center justify-center shrink-0 shadow-sm">
-                <User className="h-4 w-4 text-background" />
-              </div>
-              <div className="flex-1">
-                <div className="relative">
-                  <textarea
-                    rows={3}
-                    className="block w-full rounded-2xl border border-border bg-secondary/30 py-3 px-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-0 transition-all shadow-sm hover:border-foreground/50 outline-none resize-none"
-                    placeholder="Agregar una nota de investigación..."
-                  />
-                  <div className="absolute bottom-3 right-3">
-                    <button className="inline-flex items-center rounded-xl bg-foreground px-3 py-1.5 text-xs font-medium text-background shadow-sm hover:bg-foreground/90 transition-colors">
-                      <Send className="h-3 w-3 mr-1.5" />
-                      Agregar
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
