@@ -27,7 +27,6 @@ func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *enti
 	score := 0
 	var factors []string
 
-	// 0. Regla de Negocio: Monto alto (> 10,000 USD/EUR o equivalente en PEN)
 	threshold := 10000.0
 	if currencyCode == "PEN" {
 		threshold = 37500.0 // Tipo de cambio aproximado
@@ -41,41 +40,35 @@ func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *enti
 		factors = append(factors, fmt.Sprintf("Monto excede el límite de seguridad de %.2f %s", threshold, currencyCode))
 	}
 
-	// 1. Monto inusual: Monto > 3x promedio histórico
 	avgAmount := calculateAverageAmount(history)
 	if avgAmount > 0 && transaction.Amount > 3*avgAmount {
 		score += 35
 		factors = append(factors, "Monto inusual (supera 3x el promedio)")
 	}
 
-	// 2. Ubicación inusual: País diferente al más frecuente
 	frequentCountry := getMostFrequentCountry(history)
 	if frequentCountry != "" && transaction.Country != frequentCountry {
 		score += 25
 		factors = append(factors, fmt.Sprintf("Ubicación inusual (diferente a %s)", frequentCountry))
 	}
 
-	// 3. Alta frecuencia: >10 transacciones en 24h
 	recentCount := countRecentTransactions(history, transaction.CreatedAt, 24*time.Hour)
 	if recentCount > 10 {
 		score += 20
 		factors = append(factors, "Alta frecuencia de transacciones")
 	}
 
-	// 4. Canal inusual: Canal poco usado por el cliente
 	if !isChannelCommon(history, transaction.ChannelID) {
 		score += 15
 		factors = append(factors, "Canal inusual")
 	}
 
-	// 5. Horario inusual: Transacción en horario atípico (ej. 02:00 - 05:00)
 	hour := transaction.CreatedAt.Hour()
 	if hour >= 2 && hour <= 5 {
 		score += 10
 		factors = append(factors, "Horario inusual (madrugada)")
 	}
 
-	// 6. Monto redondo sospechoso: Montos exactos grandes
 	if transaction.Amount >= 1000 && math.Mod(transaction.Amount, 100) == 0 {
 		score += 10
 		factors = append(factors, "Monto redondo sospechoso")

@@ -1,0 +1,71 @@
+graph TD
+    %% Estilos
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef driving fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef app fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
+    classDef domain fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef driven fill:#ffebee,stroke:#c62828,stroke-width:2px;
+    classDef db fill:#eceff1,stroke:#455a64,stroke-width:2px,shape:cylinder;
+
+    subgraph "Cliente (Frontend)"
+        UI[Next.js Dashboard]:::frontend
+    end
+
+    subgraph "Backend (Go - Hexagonal Architecture)"
+
+        subgraph "Driving Adapters (Entrada)"
+            Router[HTTP Router / Gin]:::driving
+            Handlers[HTTP Handlers]:::driving
+        end
+
+        subgraph "Application Layer (Casos de Uso)"
+            AuthUC[Auth UseCase]:::app
+            TxUC[Transaction UseCase]:::app
+            AlertUC[Alert UseCase]:::app
+            DashUC[Dashboard UseCase]:::app
+        end
+
+        subgraph "Domain Layer (Núcleo)"
+            Entities["Entidades: Transaction, Client, Alert"]:::domain
+            RepoInterfaces[Interfaces Repositorios]:::domain
+            ServiceInterfaces["Interfaces Servicios (IA)"]:::domain
+        end
+
+        subgraph "Driven Adapters (Salida)"
+            PGAdapter[Postgres Adapter]:::driven
+            AIAdapter[AI Mock Adapter]:::driven
+        end
+    end
+
+    subgraph "Infraestructura Externa"
+        DB[(PostgreSQL)]:::db
+    end
+
+    %% Relaciones
+    UI -->|JSON / REST API| Router
+    Router --> Handlers
+
+    Handlers -->|Invoca| TxUC
+    Handlers -->|Invoca| AlertUC
+    Handlers -->|Invoca| DashUC
+
+    TxUC -->|Implementa| ServiceInterfaces
+    TxUC -->|Usa| Entities
+    TxUC -->|Usa| RepoInterfaces
+
+    AlertUC -->|Usa| Entities
+    AlertUC -->|Usa| RepoInterfaces
+
+    PGAdapter -.->|Implementa| RepoInterfaces
+    AIAdapter -.->|Implementa| ServiceInterfaces
+
+    TxUC -->|Llama| AIAdapter
+    TxUC -->|Persiste| PGAdapter
+    AlertUC -->|Lee/Escribe| PGAdapter
+    DashUC -->|Lee Métricas| PGAdapter
+
+    PGAdapter -->|SQL| DB
+
+    %% Notas
+    note_ai["Simulación de IA<br/>(Reglas Heurísticas)"]
+    AIAdapter --- note_ai

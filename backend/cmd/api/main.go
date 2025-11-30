@@ -20,25 +20,21 @@ import (
 )
 
 func main() {
-	// 1. Load Configuration
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		panic("Failed to load configuration: " + err.Error())
 	}
 
-	// 2. Initialize Logger
 	logger.Init(cfg.LogLevel)
 	defer logger.Sync()
 	logger.Info("Starting Zentinel API", zap.String("port", cfg.ServerPort))
 
-	// 3. Database Connection
 	db, err := postgres.NewConnection(cfg)
 	if err != nil {
 		logger.Error("Failed to connect to database", zap.Error(err))
 		os.Exit(1)
 	}
 
-	// 4. Initialize Driven Adapters (Repositories & External Services)
 	clientRepo := postgres.NewClientRepository(db)
 	accountRepo := postgres.NewAccountRepository(db)
 	transactionRepo := postgres.NewTransactionRepository(db)
@@ -47,14 +43,12 @@ func main() {
 
 	aiService := ai.NewMockAnalyzer()
 
-	// 5. Initialize Application Layer (Use Cases)
 	clientUseCase := usecase.NewClientUseCase(clientRepo, accountRepo, catalogueRepo)
 	accountUseCase := usecase.NewAccountUseCase(accountRepo, clientRepo, catalogueRepo)
 	alertUseCase := usecase.NewAlertUseCase(alertRepo, catalogueRepo)
 	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, accountRepo, clientRepo, alertRepo, catalogueRepo, aiService)
 	dashboardUseCase := usecase.NewDashboardUseCase(transactionRepo, alertRepo)
 
-	// 6. Initialize Driving Adapters (HTTP Handlers)
 	healthHandler := handler.NewHealthHandler(db)
 	clientHandler := handler.NewClientHandler(clientUseCase)
 	accountHandler := handler.NewAccountHandler(accountUseCase)
@@ -62,7 +56,6 @@ func main() {
 	alertHandler := handler.NewAlertHandler(alertUseCase)
 	dashboardHandler := handler.NewDashboardHandler(dashboardUseCase)
 
-	// 7. Setup Router
 	router := zhttp.SetupRouter(
 		healthHandler,
 		clientHandler,
@@ -72,7 +65,6 @@ func main() {
 		dashboardHandler,
 	)
 
-	// 8. Start Server
 	srv := zhttp.NewServer(cfg, router)
 
 	go func() {
@@ -82,7 +74,6 @@ func main() {
 		}
 	}()
 
-	// 9. Graceful Shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
