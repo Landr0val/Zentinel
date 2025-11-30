@@ -56,21 +56,21 @@ export const api = {
           }
         });
       }
-      return fetcher<ApiResponse<Client[]>>(`/clients?${searchParams.toString()}`);
+      return fetcher<ApiResponse<Client[]>>(`/api/v1/clients?${searchParams.toString()}`);
     },
     get: (id: string) => fetcher<ApiResponse<Client>>(`/clients/${id}`),
     create: (data: CreateClientRequest) =>
-      fetcher<ApiResponse<Client>>("/clients", {
+      fetcher<ApiResponse<Client>>("/api/v1/clients", {
         method: "POST",
         body: JSON.stringify(data),
       }),
     update: (id: string, data: Partial<Client>) =>
-      fetcher<ApiResponse<Client>>(`/clients/${id}`, {
+      fetcher<ApiResponse<Client>>(`/api/v1/clients/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
       }),
     getAccounts: (id: string) =>
-      fetcher<ApiResponse<Account[]>>(`/clients/${id}/accounts`),
+      fetcher<ApiResponse<Account[]>>(`/api/v1/clients/${id}/accounts`),
   },
   accounts: {
     list: (params?: Record<string, string | number | boolean | null | undefined>) => {
@@ -82,16 +82,16 @@ export const api = {
           }
         });
       }
-      return fetcher<ApiResponse<Account[]>>(`/accounts?${searchParams.toString()}`);
+      return fetcher<ApiResponse<Account[]>>(`/api/v1/accounts?${searchParams.toString()}`);
     },
-    get: (id: string) => fetcher<ApiResponse<Account>>(`/accounts/${id}`),
+    get: (id: string) => fetcher<ApiResponse<Account>>(`/api/v1/accounts/${id}`),
     create: (data: Partial<Account>) =>
-      fetcher<ApiResponse<Account>>("/accounts", {
+      fetcher<ApiResponse<Account>>("/api/v1/accounts", {
         method: "POST",
         body: JSON.stringify(data),
       }),
     update: (id: string, data: Partial<Account>) =>
-      fetcher<ApiResponse<Account>>(`/accounts/${id}`, {
+      fetcher<ApiResponse<Account>>(`/api/v1/accounts/${id}`, {
         method: "PUT",
         body: JSON.stringify(data),
       }),
@@ -107,18 +107,18 @@ export const api = {
         });
       }
       return fetcher<ApiResponse<Transaction[]>>(
-        `/transactions?${searchParams.toString()}`
+        `/api/v1/transactions?${searchParams.toString()}`
       );
     },
-    get: (id: string) => fetcher<ApiResponse<Transaction>>(`/transactions/${id}`),
+    get: (id: string) => fetcher<ApiResponse<Transaction>>(`/api/v1/transactions/${id}`),
     create: (data: CreateTransactionRequest) =>
-      fetcher<ApiResponse<Transaction>>("/transactions", {
+      fetcher<ApiResponse<Transaction>>("/api/v1/transactions", {
         method: "POST",
         body: JSON.stringify(data),
       }),
     analyze: (id: string) =>
       fetcher<ApiResponse<{ risk_score: number; analysis: string }>>(
-        `/transactions/${id}/analyze`,
+        `/api/v1/transactions/${id}/analyze`,
         {
           method: "POST",
         }
@@ -134,16 +134,16 @@ export const api = {
           }
         });
       }
-      return fetcher<ApiResponse<Alert[]>>(`/alerts?${searchParams.toString()}`);
+      return fetcher<ApiResponse<Alert[]>>(`/api/v1/alerts?${searchParams.toString()}`);
     },
-    get: (id: string) => fetcher<ApiResponse<Alert>>(`/alerts/${id}`),
+    get: (id: string) => fetcher<ApiResponse<Alert>>(`/api/v1/alerts/${id}`),
     create: (data: Partial<Alert>) =>
-      fetcher<ApiResponse<Alert>>("/alerts", {
+      fetcher<ApiResponse<Alert>>("/api/v1/alerts", {
         method: "POST",
         body: JSON.stringify(data),
       }),
     updateStatus: (id: string, status: string) =>
-      fetcher<ApiResponse<Alert>>(`/alerts/${id}/status`, {
+      fetcher<ApiResponse<Alert>>(`/api/v1/alerts/${id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       }),
