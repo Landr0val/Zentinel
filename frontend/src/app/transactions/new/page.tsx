@@ -193,7 +193,7 @@ export default function NewTransactionPage() {
                   >
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
-                    <option value="PEN">PEN</option>
+                    <option value="COP">COP</option>
                   </select>
                 </div>
               </div>

@@ -17,6 +17,7 @@ type AlertModel struct {
 	StatusID      uuid.UUID  `gorm:"column:status_id"`
 	ReviewedBy    string     `gorm:"column:reviewed_by"`
 	ReviewedAt    *time.Time `gorm:"column:reviewed_at"`
+	BlockchainTx  *string    `gorm:"column:blockchain_tx"`
 	CreatedAt     time.Time  `gorm:"column:created_at"`
 }
 

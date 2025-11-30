@@ -15,6 +15,8 @@ import {
   MoreHorizontal,
   Loader2,
   AlertCircle,
+  ExternalLink,
+  FileCheck,
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -289,6 +291,39 @@ export default function AlertDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Blockchain Verification Badge */}
+          {alert.blockchain_tx && (
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-zen relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <FileCheck className="h-24 w-24 text-purple-600" />
+              </div>
+              <h3 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
+                <FileCheck className="h-4 w-4 text-purple-600" />
+                Evidencia Blockchain
+              </h3>
+              <div className="bg-purple-500/5 rounded-2xl p-4 border border-purple-500/20 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Esta alerta ha sido registrada inmutablemente en la red
+                  Polygon para auditoría.
+                </p>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    Transaction Hash
+                  </p>
+                  <a
+                    href={`https://polygonscan.com/tx/${alert.blockchain_tx}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs font-mono text-purple-600 hover:text-purple-700 hover:underline break-all"
+                  >
+                    {alert.blockchain_tx.substring(0, 16)}...
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Related Transaction */}
           <div className="rounded-3xl border border-border bg-card p-6 shadow-zen">

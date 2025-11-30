@@ -28,8 +28,8 @@ func (m *MockAnalyzer) AnalyzeTransaction(ctx context.Context, transaction *enti
 	var factors []string
 
 	threshold := 10000.0
-	if currencyCode == "PEN" {
-		threshold = 37500.0 // Tipo de cambio aproximado
+	if currencyCode == "COP" {
+		threshold = 40000000.0 // Tipo de cambio aproximado
 	}
 
 	isHighAmount := false

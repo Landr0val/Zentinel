@@ -17,5 +17,6 @@ type Alert struct {
 	StatusID      uuid.UUID
 	ReviewedBy    string
 	ReviewedAt    *time.Time
+	BlockchainTx  *string
 	CreatedAt     time.Time
 }

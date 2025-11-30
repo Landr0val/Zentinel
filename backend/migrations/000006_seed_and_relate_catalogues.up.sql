@@ -40,7 +40,7 @@ BEGIN
     -- CURRENCY
     ('CURRENCY', 'USD', 'Dólar Estadounidense', 'Moneda de Estados Unidos'),
     ('CURRENCY', 'EUR', 'Euro', 'Moneda de la Eurozona'),
-    ('CURRENCY', 'PEN', 'Sol Peruano', 'Moneda de Perú'),
+    ('CURRENCY', 'COP', 'Peso Colombiano', 'Moneda de Colombia'),
 
     -- OPERATION_TYPE
     ('OPERATION_TYPE', 'purchase', 'Compra', 'Compra en comercio'),

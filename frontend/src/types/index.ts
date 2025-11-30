@@ -122,6 +122,7 @@ export interface Alert {
   ai_explanation?: string;
   reviewed_by?: string;
   reviewed_at?: string;
+  blockchain_tx?: string;
   created_at: string;
   // Optional joined fields
   transaction_amount?: number;

@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"zentinel/internal/application/usecase"
+	"zentinel/internal/domain/service"
 	"zentinel/internal/infrastructure/driven/ai"
+	"zentinel/internal/infrastructure/driven/blockchain"
 	"zentinel/internal/infrastructure/driven/persistence/postgres"
 	zhttp "zentinel/internal/infrastructure/driving/http"
 	"zentinel/internal/infrastructure/driving/http/handler"
@@ -43,10 +45,20 @@ func main() {
 
 	aiService := ai.NewMockAnalyzer()
 
+	// Initialize Blockchain Adapter
+	var blockchainNotifier service.BlockchainNotifier
+	blockchainNotifier, err = blockchain.NewPolygonAdapter()
+	if err != nil {
+		logger.Warn("Real Blockchain adapter failed to initialize, falling back to Mock adapter", zap.Error(err))
+		blockchainNotifier = blockchain.NewMockBlockchainAdapter()
+	} else {
+		logger.Info("Blockchain adapter initialized successfully")
+	}
+
 	clientUseCase := usecase.NewClientUseCase(clientRepo, accountRepo, catalogueRepo)
 	accountUseCase := usecase.NewAccountUseCase(accountRepo, clientRepo, catalogueRepo)
-	alertUseCase := usecase.NewAlertUseCase(alertRepo, catalogueRepo)
-	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, accountRepo, clientRepo, alertRepo, catalogueRepo, aiService)
+	alertUseCase := usecase.NewAlertUseCase(alertRepo, catalogueRepo, blockchainNotifier)
+	transactionUseCase := usecase.NewTransactionUseCase(transactionRepo, accountRepo, clientRepo, alertRepo, catalogueRepo, aiService, blockchainNotifier)
 	dashboardUseCase := usecase.NewDashboardUseCase(transactionRepo, alertRepo)
 
 	healthHandler := handler.NewHealthHandler(db)

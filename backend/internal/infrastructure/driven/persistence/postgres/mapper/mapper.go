@@ -131,6 +131,7 @@ func ToAlertEntity(m *model.AlertModel) *entity.Alert {
 		StatusID:      m.StatusID,
 		ReviewedBy:    m.ReviewedBy,
 		ReviewedAt:    m.ReviewedAt,
+		BlockchainTx:  m.BlockchainTx,
 		CreatedAt:     m.CreatedAt,
 	}
 }
@@ -150,6 +151,7 @@ func ToAlertModel(e *entity.Alert) *model.AlertModel {
 		StatusID:      e.StatusID,
 		ReviewedBy:    e.ReviewedBy,
 		ReviewedAt:    e.ReviewedAt,
+		BlockchainTx:  e.BlockchainTx,
 		CreatedAt:     e.CreatedAt,
 	}
 }

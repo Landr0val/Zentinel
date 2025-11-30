@@ -34,5 +34,6 @@ type AlertResponse struct {
 	Status          enums.AlertStatus   `json:"status"`
 	ReviewedBy      string              `json:"reviewed_by,omitempty"`
 	ReviewedAt      *time.Time          `json:"reviewed_at,omitempty"`
+	BlockchainTx    *string             `json:"blockchain_tx,omitempty"`
 	CreatedAt       time.Time           `json:"created_at"`
 }

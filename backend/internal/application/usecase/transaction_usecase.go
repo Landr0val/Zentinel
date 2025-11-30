@@ -20,12 +20,13 @@ import (
 var _ port.TransactionUseCase = (*TransactionUseCase)(nil)
 
 type TransactionUseCase struct {
-	transactionRepo repository.TransactionRepository
-	accountRepo     repository.AccountRepository
-	clientRepo      repository.ClientRepository
-	alertRepo       repository.AlertRepository
-	catalogueRepo   repository.CatalogueRepository
-	aiService       domainService.AIService
+	transactionRepo    repository.TransactionRepository
+	accountRepo        repository.AccountRepository
+	clientRepo         repository.ClientRepository
+	alertRepo          repository.AlertRepository
+	catalogueRepo      repository.CatalogueRepository
+	aiService          domainService.AIService
+	blockchainNotifier domainService.BlockchainNotifier
 }
 
 func NewTransactionUseCase(
@@ -35,14 +36,16 @@ func NewTransactionUseCase(
 	alertRepo repository.AlertRepository,
 	catalogueRepo repository.CatalogueRepository,
 	aiService domainService.AIService,
+	blockchainNotifier domainService.BlockchainNotifier,
 ) *TransactionUseCase {
 	return &TransactionUseCase{
-		transactionRepo: transactionRepo,
-		accountRepo:     accountRepo,
-		clientRepo:      clientRepo,
-		alertRepo:       alertRepo,
-		catalogueRepo:   catalogueRepo,
-		aiService:       aiService,
+		transactionRepo:    transactionRepo,
+		accountRepo:        accountRepo,
+		clientRepo:         clientRepo,
+		alertRepo:          alertRepo,
+		catalogueRepo:      catalogueRepo,
+		aiService:          aiService,
+		blockchainNotifier: blockchainNotifier,
 	}
 }
 
@@ -168,6 +171,18 @@ func (s *TransactionUseCase) CreateTransaction(ctx context.Context, req dto.Crea
 			StatusID:      alertStatusCat.ID,
 			CreatedAt:     time.Now(),
 		}
+
+		// Blockchain Integration for Critical Alerts
+		if analysis.RiskLevel == enums.AlertSeverityCritical && s.blockchainNotifier != nil {
+			txHash, err := s.blockchainNotifier.RegisterAlert(ctx, *alert)
+			if err == nil {
+				alert.BlockchainTx = &txHash
+				logger.Info("Alert registered on blockchain", zap.String("tx_hash", txHash))
+			} else {
+				logger.Error("Failed to register alert on blockchain", zap.Error(err))
+			}
+		}
+
 		if err := s.alertRepo.Save(ctx, alert); err != nil {
 			logger.Error("Failed to save alert", zap.Error(err))
 			return nil, err

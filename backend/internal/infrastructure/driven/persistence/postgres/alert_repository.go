@@ -46,6 +46,13 @@ func (r *AlertRepository) Save(ctx context.Context, alert *entity.Alert) error {
 	alert.ID = m.ID
 	alert.CreatedAt = m.CreatedAt
 
+	// Manually save BlockchainTx if present, as SP doesn't handle it yet
+	if alert.BlockchainTx != nil {
+		if err := r.db.WithContext(ctx).Model(&model.AlertModel{ID: alert.ID}).Update("blockchain_tx", alert.BlockchainTx).Error; err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -58,7 +65,11 @@ func (r *AlertRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.A
 		}
 		return nil, result.Error
 	}
-	return mapper.ToAlertEntity(&alertModel), nil
+
+	ent := mapper.ToAlertEntity(&alertModel)
+	// Manual mapping for new field
+	ent.BlockchainTx = alertModel.BlockchainTx
+	return ent, nil
 }
 
 func (r *AlertRepository) FindByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]*entity.Alert, error) {
@@ -71,7 +82,10 @@ func (r *AlertRepository) FindByTransactionID(ctx context.Context, transactionID
 	var alerts []*entity.Alert
 	for _, m := range alertModels {
 		modelCopy := m
-		alerts = append(alerts, mapper.ToAlertEntity(&modelCopy))
+		ent := mapper.ToAlertEntity(&modelCopy)
+		// Manual mapping for new field
+		ent.BlockchainTx = modelCopy.BlockchainTx
+		alerts = append(alerts, ent)
 	}
 	return alerts, nil
 }
@@ -115,7 +129,10 @@ func (r *AlertRepository) FindAll(ctx context.Context, filter repository.AlertFi
 	var alerts []*entity.Alert
 	for _, m := range alertModels {
 		modelCopy := m
-		alerts = append(alerts, mapper.ToAlertEntity(&modelCopy))
+		ent := mapper.ToAlertEntity(&modelCopy)
+		// Manual mapping for new field
+		ent.BlockchainTx = modelCopy.BlockchainTx
+		alerts = append(alerts, ent)
 	}
 
 	return alerts, total, nil
@@ -147,7 +164,7 @@ func (r *AlertRepository) CountByStatus(ctx context.Context) (map[enums.AlertSta
 }
 
 func (r *AlertRepository) Update(ctx context.Context, alert *entity.Alert) error {
-	return r.db.WithContext(ctx).Exec(
+	err := r.db.WithContext(ctx).Exec(
 		"CALL sp_update_alert(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		alert.ID,
 		alert.TransactionID,
@@ -160,6 +177,19 @@ func (r *AlertRepository) Update(ctx context.Context, alert *entity.Alert) error
 		alert.ReviewedBy,
 		alert.ReviewedAt,
 	).Error
+
+	if err != nil {
+		return err
+	}
+
+	// Manually update BlockchainTx if present
+	if alert.BlockchainTx != nil {
+		if err := r.db.WithContext(ctx).Model(&model.AlertModel{ID: alert.ID}).Update("blockchain_tx", alert.BlockchainTx).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *AlertRepository) CountActive(ctx context.Context) (int64, error) {

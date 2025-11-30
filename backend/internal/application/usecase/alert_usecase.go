@@ -9,6 +9,7 @@ import (
 	"zentinel/internal/domain/entity"
 	"zentinel/internal/domain/enums"
 	"zentinel/internal/domain/repository"
+	"zentinel/internal/domain/service"
 
 	"github.com/google/uuid"
 )
@@ -16,14 +17,20 @@ import (
 var _ port.AlertUseCase = (*AlertUseCase)(nil)
 
 type AlertUseCase struct {
-	alertRepo     repository.AlertRepository
-	catalogueRepo repository.CatalogueRepository
+	alertRepo          repository.AlertRepository
+	catalogueRepo      repository.CatalogueRepository
+	blockchainNotifier service.BlockchainNotifier
 }
 
-func NewAlertUseCase(alertRepo repository.AlertRepository, catalogueRepo repository.CatalogueRepository) *AlertUseCase {
+func NewAlertUseCase(
+	alertRepo repository.AlertRepository,
+	catalogueRepo repository.CatalogueRepository,
+	blockchainNotifier service.BlockchainNotifier,
+) *AlertUseCase {
 	return &AlertUseCase{
-		alertRepo:     alertRepo,
-		catalogueRepo: catalogueRepo,
+		alertRepo:          alertRepo,
+		catalogueRepo:      catalogueRepo,
+		blockchainNotifier: blockchainNotifier,
 	}
 }
 
@@ -53,6 +60,13 @@ func (s *AlertUseCase) CreateAlert(ctx context.Context, req dto.CreateAlertReque
 		AIExplanation: req.AIExplanation,
 		StatusID:      statusCat.ID,
 		CreatedAt:     time.Now(),
+	}
+
+	if req.Severity == enums.AlertSeverityCritical && s.blockchainNotifier != nil {
+		txHash, err := s.blockchainNotifier.RegisterAlert(ctx, *alert)
+		if err == nil {
+			alert.BlockchainTx = &txHash
+		}
 	}
 
 	if err := s.alertRepo.Save(ctx, alert); err != nil {
@@ -161,5 +175,6 @@ func (s *AlertUseCase) mapToResponse(ctx context.Context, alert *entity.Alert) (
 		ReviewedBy:      alert.ReviewedBy,
 		ReviewedAt:      alert.ReviewedAt,
 		CreatedAt:       alert.CreatedAt,
+		BlockchainTx:    alert.BlockchainTx,
 	}, nil
 }

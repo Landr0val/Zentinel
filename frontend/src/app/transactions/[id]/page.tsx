@@ -12,75 +12,120 @@ import {
   Clock,
   CreditCard,
   BrainCircuit,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
-
-// Mock data
-const transactionData = {
-  id: "txn_3",
-  amount: 8000.0,
-  currency: "MXN",
-  date: "2024-03-12 13:15:00",
-  merchant: "Cajero ATM #402",
-  location: "Ciudad de México, Centro",
-  status: "flagged",
-  type: "withdrawal",
-  accountNumber: "1234-5678-9012",
-  clientName: "Juan Pérez",
-  clientId: "1",
-  accountId: "1",
-  riskScore: 85,
-  riskLevel: "high",
-  aiAnalysis:
-    "La transacción presenta un comportamiento anómalo. El monto retirado excede el promedio histórico de retiros en cajeros automáticos para este cliente ($2,000 MXN). Además, la ubicación del cajero difiere del patrón habitual de geolocalización del cliente en los últimos 30 días.",
-  riskFactors: [
-    "Monto inusual para el canal (ATM)",
-    "Ubicación geográfica atípica",
-    "Hora no habitual para este tipo de operación",
-  ],
-};
+import { cn } from "../../../lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../../lib/api";
 
 export default function TransactionDetailPage() {
   const params = useParams();
   const id = params?.id as string;
 
+  const {
+    data: transactionRes,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["transaction", id],
+    queryFn: () => api.transactions.get(id),
+  });
+
+  const transaction = transactionRes?.data;
+
+  // Fetch account details to get client info if available
+  const { data: accountRes } = useQuery({
+    queryKey: ["account", transaction?.account_id],
+    queryFn: () => api.accounts.get(transaction!.account_id),
+    enabled: !!transaction?.account_id,
+  });
+  const account = accountRes?.data;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !transaction) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center text-center">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-lg font-semibold">
+          Error al cargar la transacción
+        </h2>
+        <p className="text-muted-foreground">
+          No se pudo encontrar la información solicitada.
+        </p>
+      </div>
+    );
+  }
+
+  // Mock AI Analysis (since backend doesn't persist full explanation on transaction yet, only on alert)
+  const aiAnalysis = {
+    explanation:
+      transaction.risk_score > 50
+        ? "La transacción presenta un comportamiento anómalo. El monto o la ubicación difieren significativamente del patrón habitual del cliente."
+        : "La transacción se ajusta a los patrones de comportamiento habituales del cliente. No se detectaron anomalías significativas.",
+    riskFactors:
+      transaction.risk_score > 50
+        ? [
+            "Monto inusual para el canal",
+            "Ubicación geográfica atípica",
+            "Hora no habitual",
+          ]
+        : ["Comportamiento normal"],
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-8">
         <Link
           href="/transactions"
-          className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+          className="p-2 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-slate-900">
-            Transacción {id}
+          <h1 className="text-3xl font-light tracking-tight text-foreground">
+            Transacción {transaction.code}
           </h1>
-          <p className="text-slate-500">Detalles y Análisis de Riesgo</p>
+          <p className="mt-1 text-muted-foreground">
+            Detalles y Análisis de Riesgo
+          </p>
         </div>
         <div className="flex gap-2">
           <span
-            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
-              transactionData.status === "completed"
-                ? "bg-green-100 text-green-800"
-                : transactionData.status === "flagged"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-yellow-100 text-yellow-800"
-            }`}
-          >
-            {transactionData.status === "flagged" && (
-              <AlertTriangle className="h-4 w-4" />
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium border",
+              transaction.status === "completed"
+                ? "bg-green-500/10 text-green-600 border-green-500/20"
+                : transaction.status === "flagged" ||
+                    transaction.status === "failed"
+                  ? "bg-destructive/10 text-destructive border-destructive/20"
+                  : "bg-secondary text-muted-foreground border-border",
             )}
-            {transactionData.status === "completed" && (
-              <CheckCircle className="h-4 w-4" />
+          >
+            {transaction.status === "flagged" ||
+            transaction.status === "failed" ? (
+              <AlertTriangle className="h-3.5 w-3.5" />
+            ) : transaction.status === "completed" ? (
+              <CheckCircle className="h-3.5 w-3.5" />
+            ) : (
+              <Clock className="h-3.5 w-3.5" />
             )}
             <span className="capitalize">
-              {transactionData.status === "flagged"
+              {transaction.status === "flagged"
                 ? "Sospechosa"
-                : transactionData.status === "completed"
-                  ? "Completada"
-                  : "Pendiente"}
+                : transaction.status === "failed"
+                  ? "Fallida"
+                  : transaction.status === "completed"
+                    ? "Completada"
+                    : "Pendiente"}
             </span>
           </span>
         </div>
@@ -90,54 +135,58 @@ export default function TransactionDetailPage() {
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* AI Analysis Card */}
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100 overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <BrainCircuit className="h-32 w-32 text-blue-600" />
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-zen overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4 opacity-5">
+              <BrainCircuit className="h-32 w-32 text-foreground" />
             </div>
             <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-4">
-                <BrainCircuit className="h-6 w-6 text-blue-600" />
-                <h3 className="text-lg font-semibold text-slate-900">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <BrainCircuit className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-medium text-foreground">
                   Análisis de IA (Sentinel)
                 </h3>
               </div>
 
-              <div className="flex items-center gap-6 mb-6">
-                <div className="text-center">
+              <div className="flex flex-col sm:flex-row items-center gap-8 mb-6">
+                <div className="text-center shrink-0">
                   <div
-                    className={`text-4xl font-bold ${
-                      transactionData.riskScore > 70
-                        ? "text-red-600"
-                        : transactionData.riskScore > 30
+                    className={cn(
+                      "text-5xl font-light tracking-tighter",
+                      transaction.risk_score > 70
+                        ? "text-destructive"
+                        : transaction.risk_score > 30
                           ? "text-yellow-600"
-                          : "text-green-600"
-                    }`}
+                          : "text-green-600",
+                    )}
                   >
-                    {transactionData.riskScore}/100
+                    {transaction.risk_score}
+                    <span className="text-2xl text-muted-foreground">/100</span>
                   </div>
-                  <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mt-1">
+                  <div className="text-xs font-medium text-muted-foreground uppercase tracking-widest mt-2">
                     Score de Riesgo
                   </div>
                 </div>
-                <div className="h-12 w-px bg-slate-200"></div>
-                <div className="flex-1">
-                  <p className="text-slate-700 leading-relaxed">
-                    {transactionData.aiAnalysis}
+                <div className="hidden sm:block h-16 w-px bg-border"></div>
+                <div className="flex-1 text-center sm:text-left">
+                  <p className="text-muted-foreground leading-relaxed">
+                    {aiAnalysis.explanation}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-slate-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-slate-900 mb-3">
+              <div className="bg-secondary/30 rounded-2xl p-5 border border-border/50">
+                <h4 className="text-sm font-medium text-foreground mb-3">
                   Factores de Riesgo Detectados:
                 </h4>
                 <ul className="space-y-2">
-                  {transactionData.riskFactors.map((factor, index) => (
+                  {aiAnalysis.riskFactors.map((factor, index) => (
                     <li
                       key={index}
-                      className="flex items-start gap-2 text-sm text-slate-600"
+                      className="flex items-center gap-2.5 text-sm text-muted-foreground"
                     >
-                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 shrink-0" />
+                      <div className="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0" />
                       {factor}
                     </li>
                   ))}
@@ -147,53 +196,65 @@ export default function TransactionDetailPage() {
           </div>
 
           {/* Transaction Details */}
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-zen">
+            <h3 className="text-lg font-medium text-foreground mb-6">
               Detalles de la Operación
             </h3>
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
               <div>
-                <dt className="text-sm font-medium text-slate-500">Monto</dt>
-                <dd className="mt-1 text-2xl font-bold text-slate-900">
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Monto
+                </dt>
+                <dd className="text-3xl font-light text-foreground tracking-tight">
                   $
-                  {transactionData.amount.toLocaleString("es-MX", {
+                  {transaction.amount.toLocaleString("es-MX", {
                     minimumFractionDigits: 2,
                   })}{" "}
-                  <span className="text-sm font-normal text-slate-500">
-                    {transactionData.currency}
+                  <span className="text-lg text-muted-foreground font-normal">
+                    {transaction.currency}
                   </span>
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-slate-500">
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                   Comercio / Destino
                 </dt>
-                <dd className="mt-1 text-lg font-medium text-slate-900">
-                  {transactionData.merchant}
+                <dd className="text-lg font-medium text-foreground">
+                  {transaction.merchant}
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-slate-500">
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                   Fecha y Hora
                 </dt>
-                <dd className="mt-1 text-sm text-slate-900 flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-slate-400" />
-                  {transactionData.date}
+                <dd className="text-sm text-foreground flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  {new Date(transaction.created_at).toLocaleString()}
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-slate-500">
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                   Ubicación
                 </dt>
-                <dd className="mt-1 text-sm text-slate-900 flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-slate-400" />
-                  {transactionData.location}
+                <dd className="text-sm text-foreground flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  {transaction.city}, {transaction.country}
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-slate-500">Tipo</dt>
-                <dd className="mt-1 text-sm text-slate-900 capitalize">
-                  {transactionData.type}
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Tipo de Operación
+                </dt>
+                <dd className="text-sm text-foreground capitalize bg-secondary inline-block px-2 py-1 rounded-md">
+                  {transaction.operation_type}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                  Canal
+                </dt>
+                <dd className="text-sm text-foreground capitalize">
+                  {transaction.channel}
                 </dd>
               </div>
             </dl>
@@ -203,81 +264,81 @@ export default function TransactionDetailPage() {
         {/* Sidebar Info */}
         <div className="space-y-6">
           {/* Actions */}
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
-            <h3 className="text-sm font-medium text-slate-900 mb-4">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-zen">
+            <h3 className="text-sm font-medium text-foreground mb-4">
               Acciones Disponibles
             </h3>
             <div className="space-y-3">
-              <button className="w-full flex justify-center items-center gap-2 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
-                <CheckCircle className="h-4 w-4" />
-                Aprobar Transacción
-              </button>
-              <button className="w-full flex justify-center items-center gap-2 rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
-                <XCircle className="h-4 w-4" />
-                Bloquear y Reportar
-              </button>
-              <button className="w-full flex justify-center items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+              <button className="w-full flex justify-center items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-sm font-medium text-background shadow-sm hover:bg-foreground/90 transition-colors">
                 <Shield className="h-4 w-4" />
                 Investigar Más
+              </button>
+              <button className="w-full flex justify-center items-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-secondary/80 transition-colors border border-border">
+                <AlertTriangle className="h-4 w-4" />
+                Reportar Anomalía
               </button>
             </div>
           </div>
 
           {/* Related Entities */}
-          <div className="rounded-xl bg-white p-6 shadow-sm border border-slate-100">
-            <h3 className="text-sm font-medium text-slate-900 mb-4">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-zen">
+            <h3 className="text-sm font-medium text-foreground mb-4">
               Entidades Relacionadas
             </h3>
 
             <div className="space-y-6">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-500 uppercase">
-                    Cliente
-                  </span>
-                  <Link
-                    href={`/clients/${transactionData.clientId}`}
-                    className="text-xs text-blue-600 hover:underline"
-                  >
-                    Ver perfil
-                  </Link>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs">
-                    {transactionData.clientName.charAt(0)}
+              {account && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                      Cliente
+                    </span>
+                    <Link
+                      href={`/clients/${account.client_id}`}
+                      className="text-xs text-foreground font-medium hover:underline"
+                    >
+                      Ver perfil
+                    </Link>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">
-                      {transactionData.clientName}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      ID: {transactionData.clientId}
-                    </p>
+                  <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50 transition-colors cursor-pointer">
+                    <div className="h-10 w-10 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground font-medium">
+                      {account.client_name?.charAt(0) || "?"}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {account.client_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        ID: {account.client_id.substring(0, 8)}...
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="border-t border-slate-100 pt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-500 uppercase">
+              <div className="border-t border-border pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                     Cuenta Origen
                   </span>
                   <Link
-                    href={`/accounts/${transactionData.accountNumber}`}
-                    className="text-xs text-blue-600 hover:underline"
+                    href={`/accounts/${transaction.account_id}`}
+                    className="text-xs text-foreground font-medium hover:underline"
                   >
                     Ver cuenta
                   </Link>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="flex items-center gap-3 p-2 rounded-xl bg-secondary/30 border border-border/50">
+                  <div className="h-10 w-10 rounded-full bg-card border border-border flex items-center justify-center text-foreground">
                     <CreditCard className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-900 font-mono">
-                      {transactionData.accountNumber}
+                    <p className="text-sm font-medium text-foreground font-mono">
+                      {account?.account_number || "Cargando..."}
                     </p>
-                    <p className="text-xs text-slate-500">Ahorro • MXN</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {account?.type || "Cuenta"} • {account?.currency || "MXN"}
+                    </p>
                   </div>
                 </div>
               </div>
