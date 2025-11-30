@@ -38,7 +38,7 @@ func SetupRouter(
 	// Auth
 	auth := r.Group("/auth")
 	{
-		// auth.POST("/register", authHandler.Register)
+		auth.POST("/register", authHandler.Register)
 		auth.POST("/login", authHandler.Login)
 	}
 
