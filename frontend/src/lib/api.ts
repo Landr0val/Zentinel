@@ -58,7 +58,7 @@ export const api = {
       }
       return fetcher<ApiResponse<Client[]>>(`/api/v1/clients?${searchParams.toString()}`);
     },
-    get: (id: string) => fetcher<ApiResponse<Client>>(`/clients/${id}`),
+    get: (id: string) => fetcher<ApiResponse<Client>>(`/api/v1/clients/${id}`),
     create: (data: CreateClientRequest) =>
       fetcher<ApiResponse<Client>>("/api/v1/clients", {
         method: "POST",
