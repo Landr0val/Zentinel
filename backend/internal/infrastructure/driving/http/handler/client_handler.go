@@ -108,6 +108,7 @@ func (h *ClientHandler) Update(c *gin.Context) {
 	}
 
 	var req dto.UpdateClientRequest
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		errorhandler.HandleRequestError(c, err)
 		return

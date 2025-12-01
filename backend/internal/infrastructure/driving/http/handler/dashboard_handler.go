@@ -30,7 +30,7 @@ func NewDashboardHandler(dashboardUseCase port.DashboardUseCase) *DashboardHandl
 // @Router       /api/v1/dashboard/stats [get]
 // @Security     BearerAuth
 func (h *DashboardHandler) GetStats(c *gin.Context) {
-	var stats *dto.DashboardStats
+	var stats *dto.DashboardStatsResponse
 	var err error
 
 	stats, err = h.dashboardUseCase.GetStats(c.Request.Context())
