@@ -79,7 +79,9 @@ export default function ClientDetailPage() {
           <h1 className="text-2xl font-bold text-foreground">
             {client.full_name}
           </h1>
-          <p className="text-muted-foreground">ID: {id}</p>
+          <p className="text-muted-foreground">
+            Documento: {client.document_number}
+          </p>
         </div>
         <Link
           href={`/clients/${id}/edit`}
