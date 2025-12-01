@@ -27,7 +27,7 @@ export default function NewAccountPage() {
         const response = await api.clients.list({ page_size: 100 });
         setClients(response.data);
       } catch (err) {
-        console.error("Failed to fetch clients", err);
+        console.error("Failed to fetch clients");
       }
     };
     fetchClients();

@@ -34,7 +34,7 @@ export default function NewTransactionPage() {
           setFormData((prev) => ({ ...prev, account_id: response.data[0].id }));
         }
       } catch (err) {
-        console.error("Failed to fetch accounts", err);
+        console.error("Failed to fetch accounts");
       }
     };
     fetchAccounts();

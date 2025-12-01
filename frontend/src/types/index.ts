@@ -16,7 +16,7 @@ export interface ApiResponse<T> {
 }
 
 export type ClientStatus = 'active' | 'inactive' | 'blocked';
-export type RiskLevel = 'low' | 'medium' | 'high';
+export type RiskProfile = 'low' | 'standard' | 'high';
 
 export interface Client {
   id: string;
@@ -29,8 +29,8 @@ export interface Client {
   city: string;
   state: string;
   zip_code: string;
-  status: ClientStatus;
-  risk_level: RiskLevel;
+  status?: ClientStatus;
+  risk_profile: RiskProfile;
   created_at: string;
   updated_at: string;
 }

@@ -8,33 +8,19 @@ const hashids = new Hashids(SECRET, MIN_LENGTH, ALPHABET);
 
 export function createSlug(databaseId: string): string {
   try {
-    const numericId = parseInt(databaseId, 10);
-    if (!isNaN(numericId)) {
-      return hashids.encode(numericId);
-    }
-    const hashValue = Array.from(databaseId).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return hashids.encode(hashValue);
+    const hex = databaseId.replace(/-/g, '');
+    return hashids.encodeHex(hex);
   } catch (error) {
-    console.error('Error creating slug:', error);
+    console.error('Error creating slug');
     return databaseId;
   }
 }
 
 export function getIdFromSlug(slug: string): string | null {
   try {
-    const decoded = hashids.decode(slug);
-    if (decoded.length > 0) {
-      return decoded[0].toString();
-    }
-    return null;
+    const decodedHex = hashids.decodeHex(slug);
+    return decodedHex || null;
   } catch (error) {
-    console.error('Error decoding slug:', error);
     return null;
   }
-}
-
-export function removeSlug(_slug: string): void {
-}
-
-export function clearAllSlugs(): void {
 }

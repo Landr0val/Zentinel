@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 import { useState } from "react";
 import { cn } from "../../lib/utils";
+import { createSlug } from "../../lib/slug-manager";
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -163,14 +164,14 @@ export default function ClientsPage() {
                           <span
                             className={cn(
                               "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
-                              client.status === "active"
+                              (client.status || "active") === "active"
                                 ? "bg-secondary text-foreground ring-border"
                                 : client.status === "inactive"
                                   ? "bg-secondary/50 text-muted-foreground ring-border/50"
                                   : "bg-destructive/10 text-destructive ring-destructive/20",
                             )}
                           >
-                            {client.status === "active"
+                            {(client.status || "active") === "active"
                               ? "Activo"
                               : client.status === "inactive"
                                 ? "Inactivo"
@@ -181,17 +182,17 @@ export default function ClientsPage() {
                           <span
                             className={cn(
                               "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
-                              client.risk_level === "low"
+                              client.risk_profile === "low"
                                 ? "bg-secondary/50 text-muted-foreground ring-border/50"
-                                : client.risk_level === "medium"
+                                : client.risk_profile === "standard"
                                   ? "bg-secondary text-foreground ring-border"
                                   : "bg-destructive/10 text-destructive ring-destructive/20",
                             )}
                           >
-                            {client.risk_level === "low"
+                            {client.risk_profile === "low"
                               ? "Bajo"
-                              : client.risk_level === "medium"
-                                ? "Medio"
+                              : client.risk_profile === "standard"
+                                ? "Estándar"
                                 : "Alto"}
                           </span>
                         </td>
@@ -200,7 +201,7 @@ export default function ClientsPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <Link
-                            href={`/clients/${client.id}`}
+                            href={`/clients/${createSlug(client.id)}`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                           >
                             <MoreHorizontal className="h-4 w-4" />

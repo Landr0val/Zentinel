@@ -17,10 +17,12 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { cn } from "../../../lib/utils";
+import { getIdFromSlug } from "../../../lib/slug-manager";
 
 export default function ClientDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const slug = params?.id as string;
+  const id = getIdFromSlug(slug) || slug;
 
   const {
     data: clientData,
@@ -151,14 +153,14 @@ export default function ClientDetailPage() {
                   <span
                     className={cn(
                       "inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize ring-1 ring-inset",
-                      client.status === "active"
+                      (client.status || "active") === "active"
                         ? "bg-secondary text-foreground ring-border"
                         : client.status === "inactive"
                           ? "bg-secondary/50 text-muted-foreground ring-border/50"
                           : "bg-destructive/10 text-destructive ring-destructive/20",
                     )}
                   >
-                    {client.status === "active"
+                    {(client.status || "active") === "active"
                       ? "Activo"
                       : client.status === "inactive"
                         ? "Inactivo"
@@ -172,18 +174,18 @@ export default function ClientDetailPage() {
                   <span
                     className={cn(
                       "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
-                      client.risk_level === "low"
+                      client.risk_profile === "low"
                         ? "bg-secondary/50 text-muted-foreground ring-border/50"
-                        : client.risk_level === "medium"
+                        : client.risk_profile === "standard"
                           ? "bg-secondary text-foreground ring-border"
                           : "bg-destructive/10 text-destructive ring-destructive/20",
                     )}
                   >
                     <Shield className="h-3 w-3" />
-                    {client.risk_level === "low"
+                    {client.risk_profile === "low"
                       ? "Bajo"
-                      : client.risk_level === "medium"
-                        ? "Medio"
+                      : client.risk_profile === "standard"
+                        ? "Estándar"
                         : "Alto"}
                   </span>
                 </div>
