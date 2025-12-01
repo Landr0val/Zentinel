@@ -19,11 +19,13 @@ import { cn } from "../../../lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { createSlug, getIdFromSlug } from "../../../lib/slug-manager";
+import { useCurrency } from "../../../context/CurrencyContext";
 
 export default function TransactionDetailPage() {
   const params = useParams();
   const slug = params?.id as string;
   const id = getIdFromSlug(slug) || slug;
+  const { formatAmount } = useCurrency();
 
   const {
     data: transactionRes,
@@ -208,13 +210,7 @@ export default function TransactionDetailPage() {
                   Monto
                 </dt>
                 <dd className="text-3xl font-light text-foreground tracking-tight">
-                  $
-                  {transaction.amount.toLocaleString("es-MX", {
-                    minimumFractionDigits: 2,
-                  })}{" "}
-                  <span className="text-lg text-muted-foreground font-normal">
-                    {transaction.currency}
-                  </span>
+                  {formatAmount(transaction.amount, transaction.currency)}
                 </dd>
               </div>
               <div>

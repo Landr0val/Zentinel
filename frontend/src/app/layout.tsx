@@ -3,6 +3,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
 import "./globals.css";
+import { CurrencyProvider } from "../context/CurrencyContext";
 import Providers from "./providers";
 import Sidebar from "../components/Sidebar";
 import AuthGuard from "../components/auth/AuthGuard";
@@ -38,20 +39,22 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <Providers>
-          <AuthGuard>
-            <div className="flex min-h-screen">
-              {!isLoginPage && <Sidebar />}
-              <main
-                className={`flex-1 transition-all duration-300 ease-in-out ${
-                  !isLoginPage ? "ml-64 p-10" : "w-full"
-                }`}
-              >
-                <div className={!isLoginPage ? "max-w-7xl mx-auto" : ""}>
-                  {children}
-                </div>
-              </main>
-            </div>
-          </AuthGuard>
+          <CurrencyProvider>
+            <AuthGuard>
+              <div className="flex min-h-screen">
+                {!isLoginPage && <Sidebar />}
+                <main
+                  className={`flex-1 transition-all duration-300 ease-in-out ${
+                    !isLoginPage ? "ml-64 p-10" : "w-full"
+                  }`}
+                >
+                  <div className={!isLoginPage ? "max-w-7xl mx-auto" : ""}>
+                    {children}
+                  </div>
+                </main>
+              </div>
+            </AuthGuard>
+          </CurrencyProvider>
         </Providers>
       </body>
     </html>

@@ -56,7 +56,23 @@ export default function NewTransactionPage() {
     setError(null);
 
     try {
-      await api.transactions.create(formData);
+      // Convert to USD before saving (Base currency for backend)
+      const rates: Record<string, number> = {
+        USD: 1,
+        EUR: 0.92,
+        COP: 3900,
+      };
+
+      const rate = rates[formData.currency] || 1;
+      const amountInUSD = formData.amount / rate;
+
+      const payload = {
+        ...formData,
+        amount: amountInUSD,
+        currency: "USD",
+      };
+
+      await api.transactions.create(payload);
       router.push("/transactions");
     } catch (err) {
       const message =

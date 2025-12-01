@@ -12,6 +12,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { useCurrency } from "../context/CurrencyContext";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -24,6 +25,7 @@ const navigation = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { currency, setCurrency } = useCurrency();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -76,6 +78,28 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-6 border-t border-border">
+        <div className="mb-6">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-3">
+            Moneda
+          </p>
+          <div className="grid grid-cols-3 gap-1 bg-secondary/50 p-1 rounded-xl">
+            {(["USD", "EUR", "COP"] as const).map((c) => (
+              <button
+                key={c}
+                onClick={() => setCurrency(c)}
+                className={cn(
+                  "text-xs font-medium py-1.5 rounded-lg transition-all",
+                  currency === c
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary",
+                )}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200 ease-out mb-4"

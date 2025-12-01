@@ -20,9 +20,11 @@ import { api } from "../../lib/api";
 import { useState } from "react";
 import { cn } from "../../lib/utils";
 import { createSlug } from "../../lib/slug-manager";
+import { useCurrency } from "../../context/CurrencyContext";
 
 export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { formatAmount } = useCurrency();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["transactions", searchTerm],
@@ -187,13 +189,8 @@ export default function TransactionsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-medium text-foreground">
-                            {txn.operation_type === "deposit" ? "+" : "-"}$
-                            {txn.amount.toLocaleString("es-MX", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {txn.currency}
+                            {txn.operation_type === "deposit" ? "+" : "-"}
+                            {formatAmount(txn.amount, txn.currency)}
                           </div>
                         </td>
                         <td className="px-6 py-4">

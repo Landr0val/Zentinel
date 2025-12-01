@@ -15,11 +15,13 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { createSlug, getIdFromSlug } from "../../../lib/slug-manager";
+import { useCurrency } from "../../../context/CurrencyContext";
 
 export default function AccountDetailPage() {
   const params = useParams();
   const slug = params?.id as string;
   const id = getIdFromSlug(slug) || slug;
+  const { formatAmount } = useCurrency();
 
   const {
     data: accountData,
@@ -117,14 +119,8 @@ export default function AccountDetailPage() {
                 <DollarSign className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="text-3xl font-bold text-foreground">
-                $
-                {account.balance.toLocaleString("es-MX", {
-                  minimumFractionDigits: 2,
-                })}
+                {formatAmount(account.balance, account.currency)}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {account.currency}
-              </p>
             </div>
             <div className="rounded-xl bg-card p-6 shadow-zen border border-border">
               <div className="flex items-center justify-between mb-4">
@@ -202,10 +198,8 @@ export default function AccountDetailPage() {
                               : "text-foreground"
                           }`}
                         >
-                          {txn.operation_type === "deposit" ? "+" : "-"}$
-                          {txn.amount.toLocaleString("es-MX", {
-                            minimumFractionDigits: 2,
-                          })}
+                          {txn.operation_type === "deposit" ? "+" : "-"}
+                          {formatAmount(txn.amount, txn.currency)}
                         </p>
                         <p className="text-xs text-muted-foreground capitalize">
                           {txn.operation_type}

@@ -22,8 +22,10 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import Link from "next/link";
 import { cn } from "../lib/utils";
+import { useCurrency } from "../context/CurrencyContext";
 
 export default function Dashboard() {
+  const { formatAmount } = useCurrency();
   const {
     data: statsData,
     isLoading,
@@ -59,7 +61,7 @@ export default function Dashboard() {
       name: "Volumen Total",
       value:
         stats?.total_volume !== undefined
-          ? `$${stats.total_volume.toLocaleString()}`
+          ? formatAmount(stats.total_volume)
           : "-",
       change: stats?.volume_change_percentage
         ? `${stats.volume_change_percentage > 0 ? "+" : ""}${stats.volume_change_percentage}%`
@@ -107,7 +109,7 @@ export default function Dashboard() {
       name: "Volumen de Riesgo",
       value:
         stats?.flagged_volume !== undefined
-          ? `$${stats.flagged_volume.toLocaleString()}`
+          ? formatAmount(stats.flagged_volume)
           : "-",
       change: "-",
       trend: "down",

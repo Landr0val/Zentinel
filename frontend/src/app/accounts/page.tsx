@@ -16,9 +16,11 @@ import { api } from "../../lib/api";
 import { useState } from "react";
 import { cn } from "../../lib/utils";
 import { createSlug } from "../../lib/slug-manager";
+import { useCurrency } from "../../context/CurrencyContext";
 
 export default function AccountsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const { formatAmount } = useCurrency();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["accounts", searchTerm],
@@ -169,10 +171,7 @@ export default function AccountsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-medium text-foreground">
-                            $
-                            {account.balance.toLocaleString("es-MX", {
-                              minimumFractionDigits: 2,
-                            })}
+                            {formatAmount(account.balance, account.currency)}
                           </div>
                         </td>
                         <td className="px-6 py-4">

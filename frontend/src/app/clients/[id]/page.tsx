@@ -18,11 +18,13 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { cn } from "../../../lib/utils";
 import { getIdFromSlug } from "../../../lib/slug-manager";
+import { useCurrency } from "../../../context/CurrencyContext";
 
 export default function ClientDetailPage() {
   const params = useParams();
   const slug = params?.id as string;
   const id = getIdFromSlug(slug) || slug;
+  const { formatAmount } = useCurrency();
 
   const {
     data: clientData,
@@ -248,13 +250,7 @@ export default function ClientDetailPage() {
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-sm font-bold text-foreground">
-                        $
-                        {account.balance.toLocaleString("es-MX", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {account.currency}
+                        {formatAmount(account.balance, account.currency)}
                       </span>
                     </div>
                   </div>

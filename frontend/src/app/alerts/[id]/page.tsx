@@ -21,11 +21,13 @@ import { cn } from "../../../lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 import { createSlug, getIdFromSlug } from "../../../lib/slug-manager";
+import { useCurrency } from "../../../context/CurrencyContext";
 
 export default function AlertDetailPage() {
   const params = useParams();
   const slug = params?.id as string;
   const id = getIdFromSlug(slug) || slug;
+  const { formatAmount } = useCurrency();
 
   const {
     data: alertRes,
@@ -324,13 +326,7 @@ export default function AlertDetailPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-lg font-medium text-foreground">
-                      $
-                      {transaction.amount.toLocaleString("es-MX", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
-                    <p className="text-xs text-muted-foreground font-medium">
-                      {transaction.currency}
+                      {formatAmount(transaction.amount, transaction.currency)}
                     </p>
                   </div>
                   <span className="text-xs font-mono text-muted-foreground bg-card px-1.5 py-0.5 rounded border border-border">
