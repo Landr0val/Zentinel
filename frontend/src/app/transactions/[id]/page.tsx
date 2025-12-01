@@ -306,9 +306,6 @@ export default function TransactionDetailPage() {
                       <p className="text-sm font-medium text-foreground">
                         {account.client_name}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        ID: {account.client_id.substring(0, 8)}...
-                      </p>
                     </div>
                   </div>
                 </div>
