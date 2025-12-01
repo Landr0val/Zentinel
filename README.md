@@ -33,7 +33,7 @@ Una vez levantado:
 *   **Frontend (Dashboard):** Accede a [http://localhost:3000](http://localhost:3000)
 *   **Backend (API):** Disponible en [http://localhost:8080](http://localhost:8080)
 *   **Documentación API (Swagger):** [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
-*   **Base de Datos:** Puerto `5432`
+*   **Base de Datos:** Puerto `5432` 
 
 ## Documentación API
 
