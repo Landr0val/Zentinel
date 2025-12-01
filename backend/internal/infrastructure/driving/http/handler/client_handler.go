@@ -23,6 +23,18 @@ func NewClientHandler(clientUseCase port.ClientUseCase) *ClientHandler {
 	}
 }
 
+// Create godoc
+// @Summary      Create a new client
+// @Description  Create a new client with initial account
+// @Tags         clients
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.CreateClientRequest true "Create Client Request"
+// @Success      201  {object}  response.ClientResponseWrapper
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /api/v1/clients [post]
+// @Security     BearerAuth
 func (h *ClientHandler) Create(c *gin.Context) {
 	var req dto.CreateClientRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,6 +51,18 @@ func (h *ClientHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, response.NewSuccessResponse(client))
 }
 
+// Get godoc
+// @Summary      Get client by ID
+// @Description  Get client details by ID
+// @Tags         clients
+// @Produce      json
+// @Param        id   path      string  true  "Client ID"
+// @Success      200  {object}  response.ClientResponseWrapper
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /api/v1/clients/{id} [get]
+// @Security     BearerAuth
 func (h *ClientHandler) Get(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -61,6 +85,20 @@ func (h *ClientHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewSuccessResponse(client))
 }
 
+// Update godo
+// @Summary      Update client
+// @Description  Update client details
+// @Tags         clients
+// @Accept       json
+// @Produce      json
+// @Param        id      path      string                   true  "Client ID"
+// @Param        request body      dto.UpdateClientRequest  true  "Update Client Request"
+// @Success      200     {object}  response.ClientResponseWrapper
+// @Failure      400     {object}  response.ErrorResponse
+// @Failure      404     {object}  response.ErrorResponse
+// @Failure      500     {object}  response.ErrorResponse
+// @Router       /api/v1/clients/{id} [put]
+// @Security     BearerAuth
 func (h *ClientHandler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -84,6 +122,17 @@ func (h *ClientHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewSuccessResponse(client))
 }
 
+// List godoc
+// @Summary      List clients
+// @Description  List clients with pagination
+// @Tags         clients
+// @Produce      json
+// @Param        page       query     int  false  "Page number"
+// @Param        page_size  query     int  false  "Page size"
+// @Success      200        {object}  response.ClientListResponseWrapper
+// @Failure      500        {object}  response.ErrorResponse
+// @Router       /api/v1/clients [get]
+// @Security     BearerAuth
 func (h *ClientHandler) List(c *gin.Context) {
 	pageStr := c.DefaultQuery("page", "1")
 	pageSizeStr := c.DefaultQuery("page_size", "10")
@@ -107,6 +156,17 @@ func (h *ClientHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewPaginatedResponse(clients, page, pageSize, total))
 }
 
+// GetAccounts godoc
+// @Summary      Get client accounts
+// @Description  Get all accounts associated with a client
+// @Tags         clients
+// @Produce      json
+// @Param        id   path      string  true  "Client ID"
+// @Success      200  {object}  response.AccountListWrapper
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /api/v1/clients/{id}/accounts [get]
+// @Security     BearerAuth
 func (h *ClientHandler) GetAccounts(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)

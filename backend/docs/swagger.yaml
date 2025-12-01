@@ -1,0 +1,1174 @@
+basePath: /api/v1
+definitions:
+  dto.AccountResponse:
+    properties:
+      account_number:
+        type: string
+      account_type:
+        $ref: '#/definitions/enums.AccountType'
+      balance:
+        type: number
+      client_id:
+        type: string
+      client_name:
+        type: string
+      created_at:
+        type: string
+      currency:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/enums.AccountStatus'
+      updated_at:
+        type: string
+    type: object
+  dto.AlertResponse:
+    properties:
+      ai_explanation:
+        type: string
+      alert_type:
+        $ref: '#/definitions/enums.AlertType'
+      blockchain_tx:
+        type: string
+      client_id:
+        type: string
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      reviewed_at:
+        type: string
+      reviewed_by:
+        type: string
+      severity:
+        $ref: '#/definitions/enums.AlertSeverity'
+      status:
+        $ref: '#/definitions/enums.AlertStatus'
+      transaction_code:
+        type: string
+      transaction_id:
+        type: string
+    type: object
+  dto.AuthResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  dto.ClientResponse:
+    properties:
+      created_at:
+        type: string
+      document_number:
+        type: string
+      document_type:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+      risk_profile:
+        $ref: '#/definitions/enums.RiskProfile'
+      updated_at:
+        type: string
+    type: object
+  dto.CreateAccountRequest:
+    properties:
+      account_number:
+        type: string
+      account_type:
+        $ref: '#/definitions/enums.AccountType'
+      client_id:
+        type: string
+      currency:
+        type: string
+    required:
+    - account_number
+    - account_type
+    - client_id
+    - currency
+    type: object
+  dto.CreateAlertRequest:
+    properties:
+      ai_explanation:
+        type: string
+      alert_type:
+        $ref: '#/definitions/enums.AlertType'
+      client_id:
+        type: string
+      description:
+        type: string
+      severity:
+        $ref: '#/definitions/enums.AlertSeverity'
+      transaction_id:
+        type: string
+    required:
+    - alert_type
+    - client_id
+    - description
+    - severity
+    type: object
+  dto.CreateClientAccountRequest:
+    properties:
+      account_number:
+        type: string
+      account_type:
+        $ref: '#/definitions/enums.AccountType'
+      currency:
+        type: string
+    required:
+    - account_number
+    - account_type
+    - currency
+    type: object
+  dto.CreateClientRequest:
+    properties:
+      document_number:
+        type: string
+      document_type:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      initial_account:
+        $ref: '#/definitions/dto.CreateClientAccountRequest'
+      phone:
+        type: string
+    required:
+    - document_number
+    - document_type
+    - email
+    - full_name
+    - phone
+    type: object
+  dto.CreateTransactionRequest:
+    properties:
+      account_id:
+        type: string
+      amount:
+        type: number
+      channel:
+        $ref: '#/definitions/enums.Channel'
+      city:
+        type: string
+      country:
+        type: string
+      currency:
+        type: string
+      merchant:
+        type: string
+      operation_type:
+        $ref: '#/definitions/enums.OperationType'
+    required:
+    - account_id
+    - amount
+    - channel
+    - currency
+    - operation_type
+    type: object
+  dto.DashboardStatsResponse:
+    properties:
+      alerts_by_status:
+        additionalProperties:
+          format: int64
+          type: integer
+        type: object
+      flagged_count:
+        type: integer
+      flagged_volume:
+        type: number
+      total_transactions:
+        type: integer
+      total_volume:
+        type: number
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.TransactionResponse:
+    properties:
+      account_id:
+        type: string
+      amount:
+        type: number
+      channel:
+        $ref: '#/definitions/enums.Channel'
+      city:
+        type: string
+      code:
+        type: string
+      country:
+        type: string
+      created_at:
+        type: string
+      currency:
+        type: string
+      id:
+        type: string
+      is_flagged:
+        type: boolean
+      merchant:
+        type: string
+      operation_type:
+        $ref: '#/definitions/enums.OperationType'
+      risk_score:
+        type: integer
+      status:
+        $ref: '#/definitions/enums.TransactionStatus'
+    type: object
+  dto.UpdateAccountRequest:
+    properties:
+      status:
+        $ref: '#/definitions/enums.AccountStatus'
+    required:
+    - status
+    type: object
+  dto.UpdateAlertStatusRequest:
+    properties:
+      reviewed_by:
+        type: string
+      status:
+        $ref: '#/definitions/enums.AlertStatus'
+    required:
+    - reviewed_by
+    - status
+    type: object
+  dto.UpdateClientRequest:
+    properties:
+      document_number:
+        type: string
+      document_type:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      phone:
+        type: string
+    type: object
+  enums.AccountStatus:
+    enum:
+    - active
+    - blocked
+    - closed
+    type: string
+    x-enum-varnames:
+    - AccountStatusActive
+    - AccountStatusBlocked
+    - AccountStatusClosed
+  enums.AccountType:
+    enum:
+    - checking
+    - savings
+    - credit_card
+    type: string
+    x-enum-varnames:
+    - AccountTypeChecking
+    - AccountTypeSavings
+    - AccountTypeCreditCard
+  enums.AlertSeverity:
+    enum:
+    - low
+    - medium
+    - high
+    - critical
+    type: string
+    x-enum-varnames:
+    - AlertSeverityLow
+    - AlertSeverityMedium
+    - AlertSeverityHigh
+    - AlertSeverityCritical
+  enums.AlertStatus:
+    enum:
+    - pending
+    - reviewed
+    - dismissed
+    - escalated
+    type: string
+    x-enum-varnames:
+    - AlertStatusPending
+    - AlertStatusReviewed
+    - AlertStatusDismissed
+    - AlertStatusEscalated
+  enums.AlertType:
+    enum:
+    - unusual_amount
+    - unusual_location
+    - high_frequency
+    - fraud_suspicion
+    type: string
+    x-enum-varnames:
+    - AlertTypeUnusualAmount
+    - AlertTypeUnusualLocation
+    - AlertTypeHighFrequency
+    - AlertTypeFraudSuspicion
+  enums.Channel:
+    enum:
+    - online
+    - atm
+    - pos
+    - branch
+    type: string
+    x-enum-varnames:
+    - ChannelOnline
+    - ChannelATM
+    - ChannelPOS
+    - ChannelBranch
+  enums.OperationType:
+    enum:
+    - purchase
+    - withdrawal
+    - transfer
+    - deposit
+    type: string
+    x-enum-varnames:
+    - OperationTypePurchase
+    - OperationTypeWithdrawal
+    - OperationTypeTransfer
+    - OperationTypeDeposit
+  enums.RiskProfile:
+    enum:
+    - low
+    - standard
+    - high
+    type: string
+    x-enum-varnames:
+    - RiskProfileLow
+    - RiskProfileStandard
+    - RiskProfileHigh
+  enums.TransactionStatus:
+    enum:
+    - completed
+    - pending
+    - failed
+    type: string
+    x-enum-varnames:
+    - TransactionStatusCompleted
+    - TransactionStatusPending
+    - TransactionStatusFailed
+  response.AccountListResponseWrapper:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.AccountResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/response.PaginationMeta'
+    type: object
+  response.AccountListWrapper:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.AccountResponse'
+        type: array
+    type: object
+  response.AccountResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.AccountResponse'
+    type: object
+  response.AlertListResponseWrapper:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.AlertResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/response.PaginationMeta'
+    type: object
+  response.AlertResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.AlertResponse'
+    type: object
+  response.ClientListResponseWrapper:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.ClientResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/response.PaginationMeta'
+    type: object
+  response.ClientResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.ClientResponse'
+    type: object
+  response.DashboardStatsResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.DashboardStatsResponse'
+    type: object
+  response.ErrorDetails:
+    properties:
+      code:
+        type: string
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/response.ErrorDetails'
+    type: object
+  response.PaginationMeta:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_items:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  response.TransactionListResponseWrapper:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.TransactionResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/response.PaginationMeta'
+    type: object
+  response.TransactionResponseWrapper:
+    properties:
+      data:
+        $ref: '#/definitions/dto.TransactionResponse'
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Fraud detection and transaction monitoring API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Zentinel API
+  version: "1.0"
+paths:
+  /api/v1/accounts:
+    get:
+      description: List accounts with pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AccountListResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List accounts
+      tags:
+      - accounts
+    post:
+      consumes:
+      - application/json
+      description: Create a new account for a client
+      parameters:
+      - description: Create Account Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.AccountResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new account
+      tags:
+      - accounts
+  /api/v1/accounts/{id}:
+    get:
+      description: Get account details by ID or Account Number
+      parameters:
+      - description: Account ID or Number
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AccountResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get account by ID or Number
+      tags:
+      - accounts
+    put:
+      consumes:
+      - application/json
+      description: Update account details (e.g. status)
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Account Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AccountResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update account
+      tags:
+      - accounts
+  /api/v1/alerts:
+    get:
+      description: List alerts with filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Search term
+        in: query
+        name: search
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: string
+      - description: Severity
+        in: query
+        name: severity
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AlertListResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List alerts
+      tags:
+      - alerts
+    post:
+      consumes:
+      - application/json
+      description: Create a new alert manually
+      parameters:
+      - description: Create Alert Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateAlertRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.AlertResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new alert
+      tags:
+      - alerts
+  /api/v1/alerts/{id}:
+    get:
+      description: Get alert details by ID
+      parameters:
+      - description: Alert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AlertResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get alert by ID
+      tags:
+      - alerts
+  /api/v1/alerts/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of an alert
+      parameters:
+      - description: Alert ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Alert Status Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateAlertStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AlertResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update alert status
+      tags:
+      - alerts
+  /api/v1/clients:
+    get:
+      description: List clients with pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ClientListResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List clients
+      tags:
+      - clients
+    post:
+      consumes:
+      - application/json
+      description: Create a new client with initial account
+      parameters:
+      - description: Create Client Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateClientRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ClientResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new client
+      tags:
+      - clients
+  /api/v1/clients/{id}:
+    get:
+      description: Get client details by ID
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ClientResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get client by ID
+      tags:
+      - clients
+    put:
+      consumes:
+      - application/json
+      description: Update client details
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Client Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateClientRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ClientResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update client
+      tags:
+      - clients
+  /api/v1/clients/{id}/accounts:
+    get:
+      description: Get all accounts associated with a client
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AccountListWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get client accounts
+      tags:
+      - clients
+  /api/v1/dashboard/stats:
+    get:
+      description: Get aggregated statistics for the dashboard
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.DashboardStatsResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get dashboard statistics
+      tags:
+      - dashboard
+  /api/v1/transactions:
+    get:
+      description: List transactions with filtering and pagination
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: From Date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: To Date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      - description: Operation Type
+        in: query
+        name: operation_type
+        type: string
+      - description: Channel
+        in: query
+        name: channel
+        type: string
+      - description: Is Flagged
+        in: query
+        name: is_flagged
+        type: boolean
+      - description: Account ID
+        in: query
+        name: account_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.TransactionListResponseWrapper'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List transactions
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      description: Create a new transaction and analyze it for fraud
+      parameters:
+      - description: Create Transaction Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.TransactionResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new transaction
+      tags:
+      - transactions
+  /api/v1/transactions/{id}:
+    get:
+      description: Get transaction details by ID
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.TransactionResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get transaction by ID
+      tags:
+      - transactions
+  /api/v1/transactions/{id}/analyze:
+    post:
+      description: Manually trigger fraud analysis for a transaction
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.TransactionResponseWrapper'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Analyze transaction
+      tags:
+      - transactions
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email and password to get JWT token
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with email and password
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /health:
+    get:
+      description: Checks the health of the service and its dependencies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health Check
+      tags:
+      - health
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

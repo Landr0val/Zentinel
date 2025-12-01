@@ -20,6 +20,13 @@ func NewHealthHandler(db *gorm.DB) *HealthHandler {
 	}
 }
 
+// Check godoc
+// @Summary      Health Check
+// @Description  Checks the health of the service and its dependencies
+// @Tags         health
+// @Produce      json
+// @Success      200  {object}  map[string]interface{}
+// @Router       /health [get]
 func (h *HealthHandler) Check(c *gin.Context) {
 	dbStatus := "up"
 

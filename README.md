@@ -32,7 +32,18 @@ La forma más sencilla de iniciar toda la infraestructura (Base de datos, Migrac
 Una vez levantado:
 *   **Frontend (Dashboard):** Accede a [http://localhost:3000](http://localhost:3000)
 *   **Backend (API):** Disponible en [http://localhost:8080](http://localhost:8080)
+*   **Documentación API (Swagger):** [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
 *   **Base de Datos:** Puerto `5432`
+
+## Documentación API
+
+El backend expone una documentación interactiva utilizando Swagger UI.
+Para regenerar la documentación si se modifican los endpoints:
+
+```bash
+cd backend
+go run github.com/swaggo/swag/cmd/swag init -g cmd/api/main.go
+```
 
 ## Testing
 

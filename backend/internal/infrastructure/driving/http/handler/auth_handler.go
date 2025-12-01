@@ -19,6 +19,17 @@ func NewAuthHandler(authUseCase port.AuthUseCase) *AuthHandler {
 	}
 }
 
+// Register godoc
+// @Summary      Register a new user
+// @Description  Register a new user with email and password
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.RegisterRequest true "Register Request"
+// @Success      201
+// @Failure      400  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -34,6 +45,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
+// Login godoc
+// @Summary      Login
+// @Description  Login with email and password to get JWT token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.LoginRequest true "Login Request"
+// @Success      200  {object}  dto.AuthResponse
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Router       /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -23,6 +23,18 @@ func NewAccountHandler(accountUseCase port.AccountUseCase) *AccountHandler {
 	}
 }
 
+// Create godoc
+// @Summary      Create a new account
+// @Description  Create a new account for a client
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.CreateAccountRequest true "Create Account Request"
+// @Success      201  {object}  response.AccountResponseWrapper
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /api/v1/accounts [post]
+// @Security     BearerAuth
 func (h *AccountHandler) Create(c *gin.Context) {
 	var req dto.CreateAccountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -39,6 +51,18 @@ func (h *AccountHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, response.NewSuccessResponse(account))
 }
 
+// Get godoc
+// @Summary      Get account by ID or Number
+// @Description  Get account details by ID or Account Number
+// @Tags         accounts
+// @Produce      json
+// @Param        id   path      string  true  "Account ID or Number"
+// @Success      200  {object}  response.AccountResponseWrapper
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /api/v1/accounts/{id} [get]
+// @Security     BearerAuth
 func (h *AccountHandler) Get(c *gin.Context) {
 	idStr := c.Param("id")
 
@@ -64,6 +88,20 @@ func (h *AccountHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewSuccessResponse(account))
 }
 
+// Update godoc
+// @Summary      Update account
+// @Description  Update account details (e.g. status)
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        id      path      string                  true  "Account ID"
+// @Param        request body      dto.UpdateAccountRequest true  "Update Account Request"
+// @Success      200     {object}  response.AccountResponseWrapper
+// @Failure      400     {object}  response.ErrorResponse
+// @Failure      404     {object}  response.ErrorResponse
+// @Failure      500     {object}  response.ErrorResponse
+// @Router       /api/v1/accounts/{id} [put]
+// @Security     BearerAuth
 func (h *AccountHandler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -87,6 +125,17 @@ func (h *AccountHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewSuccessResponse(account))
 }
 
+// List godoc
+// @Summary      List accounts
+// @Description  List accounts with pagination
+// @Tags         accounts
+// @Produce      json
+// @Param        page       query     int  false  "Page number"
+// @Param        page_size  query     int  false  "Page size"
+// @Success      200        {object}  response.AccountListResponseWrapper
+// @Failure      500        {object}  response.ErrorResponse
+// @Router       /api/v1/accounts [get]
+// @Security     BearerAuth
 func (h *AccountHandler) List(c *gin.Context) {
 	pageStr := c.DefaultQuery("page", "1")
 	pageSizeStr := c.DefaultQuery("page_size", "10")

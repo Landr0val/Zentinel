@@ -26,6 +26,18 @@ func NewTransactionHandler(transactionUseCase port.TransactionUseCase) *Transact
 	}
 }
 
+// Create godoc
+// @Summary      Create a new transaction
+// @Description  Create a new transaction and analyze it for fraud
+// @Tags         transactions
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.CreateTransactionRequest true "Create Transaction Request"
+// @Success      201  {object}  response.TransactionResponseWrapper
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /api/v1/transactions [post]
+// @Security     BearerAuth
 func (h *TransactionHandler) Create(c *gin.Context) {
 	var req dto.CreateTransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -42,6 +54,18 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, response.NewSuccessResponse(transaction))
 }
 
+// Get godoc
+// @Summary      Get transaction by ID
+// @Description  Get transaction details by ID
+// @Tags         transactions
+// @Produce      json
+// @Param        id   path      string  true  "Transaction ID"
+// @Success      200  {object}  response.TransactionResponseWrapper
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /api/v1/transactions/{id} [get]
+// @Security     BearerAuth
 func (h *TransactionHandler) Get(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
@@ -64,6 +88,23 @@ func (h *TransactionHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewSuccessResponse(transaction))
 }
 
+// List godoc
+// @Summary      List transactions
+// @Description  List transactions with filtering and pagination
+// @Tags         transactions
+// @Produce      json
+// @Param        page            query     int     false  "Page number"
+// @Param        page_size       query     int     false  "Page size"
+// @Param        from_date       query     string  false  "From Date (RFC3339)"
+// @Param        to_date         query     string  false  "To Date (RFC3339)"
+// @Param        operation_type  query     string  false  "Operation Type"
+// @Param        channel         query     string  false  "Channel"
+// @Param        is_flagged      query     bool    false  "Is Flagged"
+// @Param        account_id      query     string  false  "Account ID"
+// @Success      200             {object}  response.TransactionListResponseWrapper
+// @Failure      500             {object}  response.ErrorResponse
+// @Router       /api/v1/transactions [get]
+// @Security     BearerAuth
 func (h *TransactionHandler) List(c *gin.Context) {
 	filter := repository.TransactionFilter{
 		Page:     1,
@@ -125,6 +166,18 @@ func (h *TransactionHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewPaginatedResponse(transactions, filter.Page, filter.PageSize, total))
 }
 
+// Analyze godoc
+// @Summary      Analyze transaction
+// @Description  Manually trigger fraud analysis for a transaction
+// @Tags         transactions
+// @Produce      json
+// @Param        id   path      string  true  "Transaction ID"
+// @Success      200  {object}  response.TransactionResponseWrapper
+// @Failure      400  {object}  response.ErrorResponse
+// @Failure      404  {object}  response.ErrorResponse
+// @Failure      500  {object}  response.ErrorResponse
+// @Router       /api/v1/transactions/{id}/analyze [post]
+// @Security     BearerAuth
 func (h *TransactionHandler) Analyze(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)

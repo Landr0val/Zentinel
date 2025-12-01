@@ -4,7 +4,11 @@ import (
 	"zentinel/internal/infrastructure/driving/http/handler"
 	"zentinel/internal/infrastructure/driving/http/middleware"
 
+	_ "zentinel/docs"
+
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func SetupRouter(
@@ -34,6 +38,9 @@ func SetupRouter(
 	r.GET("/metrics", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "metrics endpoint"})
 	})
+
+	// Swagger
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Auth
 	auth := r.Group("/auth")
