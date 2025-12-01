@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 import { useState } from "react";
 import { cn } from "../../lib/utils";
+import { createSlug } from "../../lib/slug-manager";
 
 export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -251,7 +252,7 @@ export default function TransactionsPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <Link
-                            href={`/transactions/${txn.id}`}
+                            href={`/transactions/${createSlug(txn.id)}`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                           >
                             <MoreHorizontal className="h-4 w-4" />

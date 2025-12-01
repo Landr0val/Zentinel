@@ -18,10 +18,12 @@ import {
 import { cn } from "../../../lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
+import { createSlug, getIdFromSlug } from "../../../lib/slug-manager";
 
 export default function TransactionDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const slug = params?.id as string;
+  const id = getIdFromSlug(slug) || slug;
 
   const {
     data: transactionRes,
@@ -294,7 +296,7 @@ export default function TransactionDetailPage() {
                       Cliente
                     </span>
                     <Link
-                      href={`/clients/${account.client_id}`}
+                      href={`/clients/${createSlug(account.client_id)}`}
                       className="text-xs text-foreground font-medium hover:underline"
                     >
                       Ver perfil
@@ -322,7 +324,7 @@ export default function TransactionDetailPage() {
                     Cuenta Origen
                   </span>
                   <Link
-                    href={`/accounts/${transaction.account_id}`}
+                    href={`/accounts/${createSlug(transaction.account_id)}`}
                     className="text-xs text-foreground font-medium hover:underline"
                   >
                     Ver cuenta

@@ -14,10 +14,12 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
+import { createSlug, getIdFromSlug } from "../../../lib/slug-manager";
 
 export default function AccountDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const slug = params?.id as string;
+  const id = getIdFromSlug(slug) || slug;
 
   const {
     data: accountData,
@@ -29,6 +31,13 @@ export default function AccountDetailPage() {
   });
 
   const account = accountData?.data;
+
+  const { data: clientData } = useQuery({
+    queryKey: ["client", account?.client_id],
+    queryFn: () => api.clients.get(account!.client_id),
+    enabled: !!account?.client_id,
+  });
+  const client = clientData?.data;
 
   const { data: transactionsData, isLoading: isLoadingTransactions } = useQuery(
     {
@@ -77,7 +86,11 @@ export default function AccountDetailPage() {
           <h1 className="text-2xl font-bold text-foreground">
             Cuenta {account.account_number}
           </h1>
-          <p className="text-muted-foreground">ID: {account.id}</p>
+          <p className="text-muted-foreground">
+            {client
+              ? `${client.document_type}: ${client.document_number}`
+              : `ID: ${id}`}
+          </p>
         </div>
         <div className="flex gap-2">
           <span
@@ -221,7 +234,7 @@ export default function AccountDetailPage() {
                   {account.client_name || "Desconocido"}
                 </div>
                 <Link
-                  href={`/clients/${account.client_id}`}
+                  href={`/clients/${createSlug(account.client_id)}`}
                   className="text-sm text-primary hover:text-primary/80"
                 >
                   Ver perfil

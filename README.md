@@ -146,4 +146,5 @@ graph TD
     AIAdapter --- note_ai
     note_bc["Simulación Blockchain<br/>(Mock)"]
     BCAdapter --- note_bc
+    
 ```

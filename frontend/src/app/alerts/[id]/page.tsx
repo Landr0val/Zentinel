@@ -20,10 +20,12 @@ import {
 import { cn } from "../../../lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
+import { createSlug, getIdFromSlug } from "../../../lib/slug-manager";
 
 export default function AlertDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const slug = params?.id as string;
+  const id = getIdFromSlug(slug) || slug;
 
   const {
     data: alertRes,
@@ -310,7 +312,7 @@ export default function AlertDetailPage() {
               </h3>
               {alert.transaction_id && (
                 <Link
-                  href={`/transactions/${alert.transaction_id}`}
+                  href={`/transactions/${createSlug(alert.transaction_id)}`}
                   className="text-xs text-foreground font-medium hover:underline"
                 >
                   Ver detalles
@@ -365,7 +367,7 @@ export default function AlertDetailPage() {
               </h3>
               {alert.client_id && (
                 <Link
-                  href={`/clients/${alert.client_id}`}
+                  href={`/clients/${createSlug(alert.client_id)}`}
                   className="text-xs text-foreground font-medium hover:underline"
                 >
                   Ver perfil
